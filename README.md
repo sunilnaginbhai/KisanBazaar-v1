@@ -64,11 +64,14 @@ npm run dev
 
 Open the frontend at `http://localhost:5173`.
 
-The deployed frontend uses `https://kisanbazaar-1.onrender.com/api` by default. Set
+The deployed frontend uses `https://kisanbazaar-v1-backend.onrender.com/api` by default. Set
 `frontend/.env` with `VITE_API_URL` to override the API URL when needed.
 
 For the deployed backend, set the Render environment variable
 `CLIENT_ORIGIN=https://kisanbazaar-v1-1.onrender.com,http://localhost:5173`.
+
+Authentication uses one JWT access token. The frontend stores it locally and sends
+it as an `Authorization: Bearer` header. There is no refresh token or token expiry.
 
 ## Run both services
 

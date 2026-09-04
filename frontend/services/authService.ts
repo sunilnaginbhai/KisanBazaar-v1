@@ -1,7 +1,8 @@
 import type { UserRole } from '../types/api'
-import { apiRequest } from './api'
+import { apiRequest, clearAccessToken, setAccessToken } from './api'
 
 export type Session = { name: string; email: string; role: UserRole }
+type AuthenticatedSession = Session & { accessToken: string }
 type AuthResponse<T> = { success: boolean; data: T; message: string }
 
 async function requestAuth<T>(path: string, options?: RequestInit): Promise<{ response: Response; data: AuthResponse<T> }> {
@@ -11,39 +12,45 @@ async function requestAuth<T>(path: string, options?: RequestInit): Promise<{ re
 export const authService = {
     async register(name: string, email: string, password: string, role: UserRole) {
         try {
-            const { response, data } = await requestAuth<Session>('/auth/register', {
+            const { response, data } = await requestAuth<AuthenticatedSession>('/auth/register', {
                 method: 'POST',
                 body: JSON.stringify({ name, email, password, role }),
             })
-            return response.ok && data.success && data.data
-                ? data
-                : { success: false, data: null, message: data.message || 'Registration failed.' }
+            if (response.ok && data.success && data.data) {
+                setAccessToken(data.data.accessToken)
+                return data
+            }
+            return { success: false, data: null, message: data.message || 'Registration failed.' }
         } catch {
             return { success: false, data: null, message: 'Authentication server is unavailable. Start the server and try again.' }
         }
     },
     async login(email: string, password: string, role?: UserRole) {
         try {
-            const { response, data } = await requestAuth<Session>('/auth/login', {
+            const { response, data } = await requestAuth<AuthenticatedSession>('/auth/login', {
                 method: 'POST',
                 body: JSON.stringify({ email, password, role }),
             })
-            return response.ok && data.success && data.data
-                ? data
-                : { success: false, data: null, message: data.message || 'Sign in failed.' }
+            if (response.ok && data.success && data.data) {
+                setAccessToken(data.data.accessToken)
+                return data
+            }
+            return { success: false, data: null, message: data.message || 'Sign in failed.' }
         } catch {
             return { success: false, data: null, message: 'Authentication server is unavailable. Start the server and try again.' }
         }
     },
     async demoLogin(role: Extract<UserRole, 'farmer' | 'bulk-buyer' | 'admin'>) {
         try {
-            const { response, data } = await requestAuth<Session>('/auth/demo-login', {
+            const { response, data } = await requestAuth<AuthenticatedSession>('/auth/demo-login', {
                 method: 'POST',
                 body: JSON.stringify({ role }),
             })
-            return response.ok && data.success && data.data
-                ? data
-                : { success: false, data: null, message: data.message || 'Demo sign in failed.' }
+            if (response.ok && data.success && data.data) {
+                setAccessToken(data.data.accessToken)
+                return data
+            }
+            return { success: false, data: null, message: data.message || 'Demo sign in failed.' }
         } catch {
             return { success: false, data: null, message: 'Authentication server is unavailable. Start the server and try again.' }
         }
@@ -66,7 +73,8 @@ export const authService = {
         try {
             await requestAuth<null>('/auth/logout', { method: 'POST' })
         } catch {
-            // The browser will discard the in-memory session when the app reloads.
+            // The access token is cleared below even if the API is unavailable.
         }
+        clearAccessToken()
     },
 }

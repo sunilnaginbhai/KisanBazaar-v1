@@ -1,11 +1,10 @@
 import dotenv from 'dotenv'
 import express from 'express'
 import cors from 'cors'
-import cookieParser from 'cookie-parser'
 import bcrypt from 'bcryptjs'
 import mongoose from 'mongoose'
 import { User } from './models/User.js'
-import { clearSessionCookie, requireAuth, setSessionCookie } from './auth.js'
+import { requireAuth, signAccessToken } from './auth.js'
 
 dotenv.config({ path: new URL('./.env', import.meta.url) })
 
@@ -28,7 +27,6 @@ app.use(cors({
     credentials: true,
 }))
 app.use(express.json({ limit: '20kb' }))
-app.use(cookieParser())
 
 app.get('/', (_request, response) => response.json({
     success: true,
@@ -71,8 +69,7 @@ app.post('/api/auth/register', async (request, response) => {
     if (existing) return response.status(409).json({ success: false, data: null, message: 'An account with this email already exists.' })
     const user = await User.create({ name: name?.trim() || normalizedEmail.split('@')[0], email: normalizedEmail, passwordHash: await bcrypt.hash(password, 12), role })
     const session = publicUser(user)
-    setSessionCookie(response, session)
-    return response.status(201).json({ success: true, data: session, message: 'Account created successfully.' })
+    return response.status(201).json({ success: true, data: { ...session, accessToken: signAccessToken(session) }, message: 'Account created successfully.' })
 })
 
 app.post('/api/auth/login', async (request, response) => {
@@ -88,8 +85,7 @@ app.post('/api/auth/login', async (request, response) => {
         return response.status(403).json({ success: false, data: null, message: 'This account is registered with a different role.' })
     }
     const session = publicUser(user)
-    setSessionCookie(response, session)
-    return response.json({ success: true, data: session, message: 'Signed in successfully.' })
+    return response.json({ success: true, data: { ...session, accessToken: signAccessToken(session) }, message: 'Signed in successfully.' })
 })
 
 app.post('/api/auth/demo-login', async (request, response) => {
@@ -110,15 +106,11 @@ app.post('/api/auth/demo-login', async (request, response) => {
         return response.status(503).json({ success: false, data: null, message: 'Demo account is unavailable.' })
     }
     const session = publicUser(user)
-    setSessionCookie(response, session)
-    return response.json({ success: true, data: session, message: 'Demo session started.' })
+    return response.json({ success: true, data: { ...session, accessToken: signAccessToken(session) }, message: 'Demo session started.' })
 })
 
 app.get('/api/auth/me', requireAuth, (request, response) => response.json({ success: true, data: request.user, message: 'Session is valid.' }))
-app.post('/api/auth/logout', (_request, response) => {
-    clearSessionCookie(response)
-    return response.json({ success: true, data: null, message: 'Signed out successfully.' })
-})
+app.post('/api/auth/logout', (_request, response) => response.json({ success: true, data: null, message: 'Signed out successfully.' }))
 
 async function seedDemoUsers() {
     if (process.env.SEED_DEMO_USERS !== 'true') return
