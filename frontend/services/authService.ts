@@ -49,12 +49,18 @@ export const authService = {
         }
     },
     async getCurrentUser() {
-        try {
-            const { response, data } = await requestAuth<Session>('/auth/me')
-            return response.ok && data.success ? data.data : null
-        } catch {
-            return null
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+            try {
+                const { response, data } = await requestAuth<Session>('/auth/me')
+                if (response.status === 401) return null
+                if (response.ok && data.success) return data.data
+            } catch {
+                if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 1000))
+                continue
+            }
+            if (attempt < 2) await new Promise((resolve) => setTimeout(resolve, 1000))
         }
+        return null
     },
     async logout() {
         try {
