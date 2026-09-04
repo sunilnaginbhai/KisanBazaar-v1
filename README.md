@@ -64,8 +64,8 @@ npm run dev
 
 Open the frontend at `http://localhost:5173`.
 
-The Vite development proxy sends `/api` requests to the local backend. Set
-`frontend/.env` with `VITE_API_URL` when using a deployed API instead.
+The frontend uses `https://kisanbazaar-v1.onrender.com/api` by default. Set
+`frontend/.env` with `VITE_API_URL` to override the API URL when needed.
 
 ## Run both services
 
