@@ -1978,7 +1978,7 @@ function ProfileMenu({
         ? "/farmer/dashboard"
         : session?.role === "bulk-buyer"
           ? "/buyer/dashboard"
-          : "/marketplace";
+          : "/login";
   if (!ready) return null;
   if (!session) return null;
   return (
@@ -2065,7 +2065,7 @@ function PortalShell() {
         ? "/farmer/dashboard"
         : session?.role === "bulk-buyer"
           ? "/buyer/dashboard"
-          : "/marketplace";
+          : "/login";
   const addProduct = (product: Product) => {
     addToStoredCart(product);
     setCartVersion((version) => version + 1);
