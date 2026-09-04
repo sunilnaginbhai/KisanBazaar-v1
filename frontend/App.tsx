@@ -638,6 +638,8 @@ function LandingMotion() {
           </p>
         </div>
       </section>
+
+
       <section className="landing-motion journey-section">
         <div className="landing-section-heading">
           <p className="eyebrow">HOW DIRECT MARKET WORKS</p>
@@ -802,6 +804,7 @@ function Home({
   };
   return (
     <div className="landing-page">
+
       <section className="landing-hero">
         <div className="landing-hero-copy">
           <h1>
@@ -861,6 +864,44 @@ function Home({
           <span className="orbit-tag tag-three">
             ₹28/kg <small>source price</small>
           </span>
+        </div>
+      </section>
+      <section className="landing-motion platform-preview-section">
+        <div className="landing-section-heading">
+          <p className="eyebrow">ONE CLEAR VIEW OF THE NETWORK</p>
+          <h2>
+            Tools that make
+            <br />
+            <i>every move visible.</i>
+          </h2>
+          <p>Move from signal to decision with focused workspaces for every role.</p>
+        </div>
+        <div className="platform-preview-grid">
+          <Link to="/buyer/dashboard" className="platform-preview-card preview-dashboard">
+            <div className="preview-card-head"><span><LayoutDashboard size={14} /> Buyer workspace</span><em>LIVE</em></div>
+            <h3>Spending overview</h3>
+            <div className="preview-chart"><i /><i /><i /><i /><i /><i /><i /></div>
+            <div className="preview-metrics"><span><b>₹2.4L</b><small>this month</small></span><span><b>12</b><small>active orders</small></span></div>
+            <div className="preview-link">Open dashboard <ArrowRight size={14} /></div>
+          </Link>
+          <Link to="/ai-crop-advisor" className="platform-preview-card preview-advisor">
+            <div className="preview-card-head"><span><Sparkles size={14} /> Crop advisor</span><em>FIELD PLAN</em></div>
+            <h3>Tell us about your plot.</h3>
+            <div className="preview-form-lines"><span /><span /><span /><b>Generate crop plan <ArrowRight size={13} /></b></div>
+            <p>Soil, season, water, and local demand in one practical recommendation.</p>
+          </Link>
+          <Link to="/features/demand" className="platform-preview-card preview-insights">
+            <div className="preview-card-head"><span><TrendingUp size={14} /> Demand forecasting</span><em>7 DAYS</em></div>
+            <h3>Seven-day demand outlook</h3>
+            <div className="preview-bars"><i /><i /><i /><i /><i /><i /></div>
+            <div className="preview-insight-callout"><b>Tomato demand is HIGH</b><small>Recommended supply · 2,400 kg</small></div>
+          </Link>
+          <Link to="/logistics" className="platform-preview-card preview-logistics">
+            <div className="preview-card-head"><span><Truck size={14} /> Logistics control</span><em>ON ROUTE</em></div>
+            <h3>Nashik <ArrowRight size={13} /> Mumbai</h3>
+            <div className="preview-route"><span /><i /><span /><i /><span /><i /><span /></div>
+            <div className="preview-metrics"><span><b>08</b><small>active shipments</small></span><span><b>92%</b><small>on-time rate</small></span></div>
+          </Link>
         </div>
       </section>
       <section className="landing-transition">
