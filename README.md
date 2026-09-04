@@ -68,7 +68,7 @@ The deployed frontend uses `https://kisanbazaar-1.onrender.com/api` by default. 
 `frontend/.env` with `VITE_API_URL` to override the API URL when needed.
 
 For the deployed backend, set the Render environment variable
-`CLIENT_ORIGIN=https://kisanbazaar-v1-1.onrender.com`.
+`CLIENT_ORIGIN=https://kisanbazaar-v1-1.onrender.com,http://localhost:5173`.
 
 ## Run both services
 

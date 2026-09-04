@@ -11,12 +11,30 @@ dotenv.config({ path: new URL('./.env', import.meta.url) })
 
 const app = express()
 const port = Number(process.env.PORT ?? 4000)
-const clientOrigin = process.env.CLIENT_ORIGIN ?? 'http://localhost:5173'
+const clientOrigins = new Set([
+    ...(process.env.CLIENT_ORIGIN ?? 'http://localhost:5173')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+    'https://kisanbazaar-v1-1.onrender.com',
+])
 const roles = ['farmer', 'consumer', 'bulk-buyer', 'admin']
 
-app.use(cors({ origin: clientOrigin, credentials: true }))
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || clientOrigins.has(origin)) return callback(null, true)
+        return callback(new Error('Origin is not allowed by the API.'))
+    },
+    credentials: true,
+}))
 app.use(express.json({ limit: '20kb' }))
 app.use(cookieParser())
+
+app.get('/', (_request, response) => response.json({
+    success: true,
+    message: 'KisanBazaar API is running.',
+    health: '/api/health',
+}))
 
 function publicUser(user) {
     return { name: user.name, email: user.email, role: user.role }

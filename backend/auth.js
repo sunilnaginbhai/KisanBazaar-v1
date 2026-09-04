@@ -2,6 +2,11 @@ import jwt from 'jsonwebtoken'
 
 const cookieName = 'direct_market_access'
 
+function usesSecureCookies() {
+    return process.env.NODE_ENV === 'production'
+        || (process.env.CLIENT_ORIGIN ?? '').split(',').some((origin) => origin.trim().startsWith('https://'))
+}
+
 export function signSession(user) {
     const secret = process.env.JWT_SECRET
     if (!secret) throw new Error('JWT_SECRET is not configured')
@@ -9,16 +14,18 @@ export function signSession(user) {
 }
 
 export function setSessionCookie(response, user) {
+    const isProduction = usesSecureCookies()
     response.cookie(cookieName, signSession(user), {
         httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
+        sameSite: isProduction ? 'none' : 'lax',
+        secure: isProduction,
         maxAge: 2 * 60 * 60 * 1000,
     })
 }
 
 export function clearSessionCookie(response) {
-    response.clearCookie(cookieName, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' })
+    const isProduction = usesSecureCookies()
+    response.clearCookie(cookieName, { httpOnly: true, sameSite: isProduction ? 'none' : 'lax', secure: isProduction })
 }
 
 export function requireAuth(request, response, next) {
