@@ -64,6 +64,15 @@ npm run dev
 
 Open the frontend at `http://localhost:5173`.
 
+For Render Static Site, add this rewrite rule so direct routes such as `/login`
+load the React application:
+
+```text
+Source: /*
+Destination: /index.html
+Action: Rewrite
+```
+
 The deployed frontend uses `https://kisanbazaar-v1-backend.onrender.com/api` by default. Set
 `frontend/.env` with `VITE_API_URL` to override the API URL when needed.
 
