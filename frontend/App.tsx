@@ -15,6 +15,7 @@ import {
   ArrowRight,
   BarChart3,
   Boxes,
+  Check,
   CheckCircle2,
   CircleDot,
   Clock3,
@@ -1191,6 +1192,14 @@ function Marketplace({ add }: { add: (product: Product) => void }) {
           : b.rating - a.rating,
     );
   }, [data, category, search, sort, organicOnly, region]);
+  const resetFilters = () => {
+    setCategory("All");
+    setOrganicOnly(false);
+    setRegion("All states");
+    setSearch("");
+    setSort("Top rated");
+  };
+  const activeFilterCount = Number(category !== "All") + Number(organicOnly) + Number(region !== "All states") + Number(Boolean(search));
   return (
     <section className="catalog-page">
       <div className="catalog-heading">
@@ -1244,18 +1253,8 @@ function Marketplace({ add }: { add: (product: Product) => void }) {
       <div className="catalog-layout">
         <aside className="filter-rail">
           <div className="filter-title">
-            <b>REFINE RESULTS</b>
-            <button
-              onClick={() => {
-                setCategory("All");
-                setOrganicOnly(false);
-                setRegion("All states");
-                setSearch("");
-                setSort("Top rated");
-              }}
-            >
-              Reset all
-            </button>
+            <b>REFINE RESULTS {activeFilterCount > 0 && <em>{activeFilterCount}</em>}</b>
+            <button onClick={resetFilters}>Reset all</button>
           </div>
           <div className="filter-section">
             <span>
@@ -1330,7 +1329,10 @@ function Marketplace({ add }: { add: (product: Product) => void }) {
             </div>
           ) : (
             <div className="empty-state">
-              No products found. Try another search.
+              <Search size={28} />
+              <h2>No harvests match those filters</h2>
+              <p>Try a wider region or clear your filters to see every available listing.</p>
+              <button className="primary-button" type="button" onClick={resetFilters}>Clear filters <ArrowRight size={15} /></button>
             </div>
           )}
         </div>
@@ -1346,8 +1348,15 @@ function Card({
   product: Product;
   add: (product: Product) => void;
 }) {
+  const [addedCount, setAddedCount] = useState(0);
+  const stockLabel = product.quantity > 3000 ? "In stock" : product.quantity > 500 ? "Limited stock" : "Selling fast";
+  const farmerShare = Math.round(product.price * 0.84);
+  const handleAdd = () => {
+    add(product);
+    setAddedCount((count) => count + 1);
+  };
   return (
-    <article className="product-card">
+    <article className="product-card" style={{ "--product-accent": product.accent } as React.CSSProperties}>
       <Link to={`/marketplace/${product.id}`} className="product-image">
         <img
           src={product.image}
@@ -1376,6 +1385,10 @@ function Card({
           <span><ShieldCheck size={12} /> {product.quality}</span>
           <span><Clock3 size={12} /> Harvest {product.harvest}</span>
         </div>
+        <div className="product-transparency">
+          <span><b>₹{farmerShare}</b> goes to farmer</span>
+          <span className={stockLabel === "Selling fast" ? "stock-alert" : "stock-good"}>{stockLabel}</span>
+        </div>
         <div className="product-bottom">
           <div>
             <strong>₹{product.price}</strong>
@@ -1386,10 +1399,11 @@ function Card({
           </div>
           <button
             className="add-button"
+            type="button"
             aria-label="Add to cart"
-            onClick={() => add(product)}
+            onClick={handleAdd}
           >
-            <Plus size={19} />
+            {addedCount ? <><Check size={17} /><span>{addedCount}</span></> : <Plus size={19} />}
           </button>
         </div>
         <CompareButton productId={product.id} />
