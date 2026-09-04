@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import type { ReactNode } from "react";
 import {
   BrowserRouter,
@@ -81,6 +81,7 @@ import { CropAdvisor } from "./features/ai-crop-advisor";
 import { ProfileAccount } from "./features/profile-account";
 import { FeatureDirectory } from "./features/feature-directory";
 import { Impact as ImpactPage } from "./components/Impact";
+import { getApiLoadingSnapshot, subscribeToApiLoading } from "./services/api";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "./App.css";
@@ -2947,9 +2948,19 @@ function App() {
   void LegacyMarketplace;
   return (
     <BrowserRouter>
+      <ApiRequestLoader />
       <PortalShell />
       <OutsideClickDismissal />
     </BrowserRouter>
   );
+}
+
+function ApiRequestLoader() {
+  const isLoading = useSyncExternalStore(
+    subscribeToApiLoading,
+    getApiLoadingSnapshot,
+    () => false,
+  );
+  return isLoading ? <div className="api-request-loader" role="status" aria-label="Loading" /> : null;
 }
 export default App;
