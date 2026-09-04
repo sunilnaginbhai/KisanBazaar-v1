@@ -5,7 +5,7 @@ The application is currently a Vite + React + TypeScript frontend with a simulat
 ## Source layout
 
 ```text
-src/
+frontend/
 ├── components/       Shared UI components
 ├── layouts/          Shared shell and portal layouts
 ├── pages/             Route-level composition

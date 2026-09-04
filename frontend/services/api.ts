@@ -1,6 +1,6 @@
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
 
-export const API_BASE_URL = (configuredApiUrl || 'https://kisanbazaar-1.onrender.com').replace(/\/+$/, '')
+export const API_BASE_URL = (configuredApiUrl || '/api').replace(/\/+$/, '')
 
 export async function apiRequest<T>(path: string, options?: RequestInit): Promise<{ response: Response; data: T }> {
     const response = await fetch(`${API_BASE_URL}${path}`, {

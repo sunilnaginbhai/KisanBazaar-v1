@@ -5,7 +5,7 @@ export type Session = { name: string; email: string; role: UserRole }
 type AuthResponse<T> = { success: boolean; data: T; message: string }
 
 async function requestAuth<T>(path: string, options?: RequestInit): Promise<{ response: Response; data: AuthResponse<T> }> {
-    return apiRequest<AuthResponse<T>>(`/api${path}`, options)
+    return apiRequest<AuthResponse<T>>(path, options)
 }
 
 export const authService = {

@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      '/api': 'https://kisanbazaar-1.onrender.com',
+      '/api': 'http://localhost:4000',
     },
   },
 })
