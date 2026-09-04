@@ -2937,7 +2937,7 @@ function SessionProfile() {
       session={session}
       onLogout={() => {
         void authService.logout();
-        window.location.assign("/login");
+        navigate("/login", { replace: true });
       }}
     />
   );
