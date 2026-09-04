@@ -1235,6 +1235,12 @@ function Marketplace({ add }: { add: (product: Product) => void }) {
         </div>
         <span className="highlight-note">2,840+ verified farmers</span>
       </div>
+      <div className="marketplace-proof" aria-label="Marketplace highlights">
+        <span><strong>24-48h</strong><small>Typical dispatch</small></span>
+        <span><strong>₹0</strong><small>Buyer platform fee</small></span>
+        <span><strong>4.8/5</strong><small>Average seller rating</small></span>
+        <span><strong>100%</strong><small>Traceable origins</small></span>
+      </div>
       <div className="catalog-layout">
         <aside className="filter-rail">
           <div className="filter-title">
@@ -1343,7 +1349,11 @@ function Card({
   return (
     <article className="product-card">
       <Link to={`/marketplace/${product.id}`} className="product-image">
-        <img src={product.image} alt={product.name} />
+        <img
+          src={product.image}
+          alt={`${product.name} from ${product.location}`}
+          style={{ objectPosition: product.category === "Fruits" ? "center 42%" : "center" }}
+        />
         <span className="origin-tag">
           <MapPin size={12} /> {product.location.split(",")[0]}
         </span>
@@ -1361,6 +1371,10 @@ function Card({
           <span className="rating">
             <Star size={13} fill="currentColor" /> {product.rating}
           </span>
+        </div>
+        <div className="product-meta-row">
+          <span><ShieldCheck size={12} /> {product.quality}</span>
+          <span><Clock3 size={12} /> Harvest {product.harvest}</span>
         </div>
         <div className="product-bottom">
           <div>
