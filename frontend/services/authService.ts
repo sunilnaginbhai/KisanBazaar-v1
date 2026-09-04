@@ -70,11 +70,6 @@ export const authService = {
         return null
     },
     async logout() {
-        try {
-            await requestAuth<null>('/auth/logout', { method: 'POST' })
-        } catch {
-            // The access token is cleared below even if the API is unavailable.
-        }
         clearAccessToken()
     },
 }
