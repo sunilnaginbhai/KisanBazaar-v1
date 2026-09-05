@@ -78,6 +78,9 @@ The deployed frontend uses `https://kisanbazaar-v1-backend.onrender.com/api` by 
 
 For the deployed backend, set the Render environment variable
 `CLIENT_ORIGIN=https://kisanbazaar-v1-1.onrender.com,http://localhost:5173`.
+To enable the demo buttons on the deployed login page, also set
+`SEED_DEMO_USERS=true`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`. Demo access is
+explicitly disabled when `SEED_DEMO_USERS` is not true.
 
 Authentication uses one JWT access token. The frontend stores it locally and sends
 it as an `Authorization: Bearer` header. There is no refresh token or token expiry.

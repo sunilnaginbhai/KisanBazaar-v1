@@ -1809,6 +1809,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole | "">("");
   const [error, setError] = useState("");
+  const [demoLoading, setDemoLoading] = useState<UserRole | "">("");
   const roleOptions: Array<[UserRole, string]> = [
     ["farmer", "Farmer"],
     ["consumer", "Consumer"],
@@ -1843,6 +1844,25 @@ function Login() {
             ? "/buyer/dashboard"
             : "/marketplace";
     navigate(destination);
+  };
+  const signInAsDemo = async (
+    demoRole: Extract<UserRole, "farmer" | "bulk-buyer" | "admin">,
+  ) => {
+    setError("");
+    setDemoLoading(demoRole);
+    const result = await authService.demoLogin(demoRole);
+    setDemoLoading("");
+    if (result.success && result.data) {
+      navigate(
+        demoRole === "admin"
+          ? "/admin/dashboard"
+          : demoRole === "farmer"
+            ? "/farmer/dashboard"
+            : "/buyer/dashboard",
+      );
+      return;
+    }
+    setError(result.message || "Demo sign in failed.");
   };
   return (
     <section className="auth-page">
@@ -1931,34 +1951,22 @@ function Login() {
         </button>
         <div className="demo-accounts">
           <button
-            onClick={() =>
-              void authService.demoLogin("farmer").then((result) => {
-                if (result.success && result.data) navigate("/farmer/dashboard");
-                else setError(result.message || "Demo sign in failed.");
-              })
-            }
+            disabled={Boolean(demoLoading)}
+            onClick={() => void signInAsDemo("farmer")}
           >
-            Farmer demo
+            {demoLoading === "farmer" ? "Opening..." : "Farmer demo"}
           </button>
           <button
-            onClick={() =>
-              void authService.demoLogin("bulk-buyer").then((result) => {
-                if (result.success && result.data) navigate("/buyer/dashboard");
-                else setError(result.message || "Demo sign in failed.");
-              })
-            }
+            disabled={Boolean(demoLoading)}
+            onClick={() => void signInAsDemo("bulk-buyer")}
           >
-            Buyer demo
+            {demoLoading === "bulk-buyer" ? "Opening..." : "Buyer demo"}
           </button>
           <button
-            onClick={() =>
-              void authService.demoLogin("admin").then((result) => {
-                if (result.success && result.data) navigate("/admin/dashboard");
-                else setError(result.message || "Demo sign in failed.");
-              })
-            }
+            disabled={Boolean(demoLoading)}
+            onClick={() => void signInAsDemo("admin")}
           >
-            Admin demo
+            {demoLoading === "admin" ? "Opening..." : "Admin demo"}
           </button>
         </div>
         <p className="auth-footer">
@@ -2101,6 +2109,12 @@ function PortalShell() {
   const [session, setSession] = useState<Session | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [cartVersion, setCartVersion] = useState(0);
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   const portal = location.pathname.split("/")[1];
   const portalLinks =
     portal === "farmer"
@@ -2179,7 +2193,7 @@ function PortalShell() {
           </Link>
         </aside>
       )}
-      <header className="topbar">
+      <header className={scrolled ? "topbar scrolled" : "topbar"}>
         <Link className="wordmark" to="/">
           <span className="mark">
             <Leaf size={18} />

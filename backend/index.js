@@ -89,7 +89,7 @@ app.post('/api/auth/login', async (request, response) => {
 })
 
 app.post('/api/auth/demo-login', async (request, response) => {
-    if (process.env.NODE_ENV === 'production' || process.env.SEED_DEMO_USERS !== 'true') {
+    if (process.env.SEED_DEMO_USERS !== 'true') {
         return response.status(404).json({ success: false, data: null, message: 'Demo access is disabled.' })
     }
     const demoEmails = {
