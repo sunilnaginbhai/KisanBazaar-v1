@@ -1950,14 +1950,6 @@ function Login() {
           Sign in <ArrowRight size={16} />
         </button>
         <div className="demo-access-panel">
-          <div className="demo-access-heading">
-            <span className="demo-access-icon"><Sparkles size={15} /></span>
-            <div>
-              <strong>Explore the live demo</strong>
-              <span>No account or password needed</span>
-            </div>
-            <span className="demo-badge">QUICK ACCESS</span>
-          </div>
           <div className="demo-accounts">
             <button
               disabled={Boolean(demoLoading)}
@@ -1982,10 +1974,7 @@ function Login() {
         <p className="auth-footer">
           New to the marketplace? <Link to="/register">Create an account</Link>
         </p>
-        <small className="auth-note">
-          Sessions are verified by the MongoDB-backed API using an HTTP-only JWT
-          cookie.
-        </small>
+
       </div>
     </section>
   );
