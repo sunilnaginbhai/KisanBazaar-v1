@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { ArrowRight, BarChart3, CheckCircle2, ClipboardList, Download, Filter, Grid2X2, List, Map, Package, Plus, Search, ShieldCheck, Truck, Users, WalletCards, X } from 'lucide-react'
 import './workflow-suite.css'
@@ -44,6 +44,13 @@ export function WorkflowWorkspace({ role }: { role: WorkspaceRole }) {
   const [status, setStatus] = useState('All')
   const [view, setView] = useState<'table' | 'grid'>('table')
   const [selected, setSelected] = useState<readonly string[] | null>(null)
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setSelected(null)
+      setNotice('')
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [section])
   const key = section === 'new' ? 'products' : section
   const title = titles[key] ?? ['Workspace overview', 'A focused view of your marketplace work.']
   const filtered = useMemo(() => {
