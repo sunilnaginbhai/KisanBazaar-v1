@@ -1949,25 +1949,35 @@ function Login() {
         <button className="primary-button" onClick={() => void signIn()}>
           Sign in <ArrowRight size={16} />
         </button>
-        <div className="demo-accounts">
-          <button
-            disabled={Boolean(demoLoading)}
-            onClick={() => void signInAsDemo("farmer")}
-          >
-            {demoLoading === "farmer" ? "Opening..." : "Farmer demo"}
-          </button>
-          <button
-            disabled={Boolean(demoLoading)}
-            onClick={() => void signInAsDemo("bulk-buyer")}
-          >
-            {demoLoading === "bulk-buyer" ? "Opening..." : "Buyer demo"}
-          </button>
-          <button
-            disabled={Boolean(demoLoading)}
-            onClick={() => void signInAsDemo("admin")}
-          >
-            {demoLoading === "admin" ? "Opening..." : "Admin demo"}
-          </button>
+        <div className="demo-access-panel">
+          <div className="demo-access-heading">
+            <span className="demo-access-icon"><Sparkles size={15} /></span>
+            <div>
+              <strong>Explore the live demo</strong>
+              <span>No account or password needed</span>
+            </div>
+            <span className="demo-badge">QUICK ACCESS</span>
+          </div>
+          <div className="demo-accounts">
+            <button
+              disabled={Boolean(demoLoading)}
+              onClick={() => void signInAsDemo("farmer")}
+            >
+              {demoLoading === "farmer" ? "Opening..." : "Farmer demo"}
+            </button>
+            <button
+              disabled={Boolean(demoLoading)}
+              onClick={() => void signInAsDemo("bulk-buyer")}
+            >
+              {demoLoading === "bulk-buyer" ? "Opening..." : "Buyer demo"}
+            </button>
+            <button
+              disabled={Boolean(demoLoading)}
+              onClick={() => void signInAsDemo("admin")}
+            >
+              {demoLoading === "admin" ? "Opening..." : "Admin demo"}
+            </button>
+          </div>
         </div>
         <p className="auth-footer">
           New to the marketplace? <Link to="/register">Create an account</Link>
@@ -2652,6 +2662,10 @@ function Register() {
         <p className="muted">
           Start with a few details. You can complete your profile later.
         </p>
+        <div className="role-picker-heading">
+          <strong>How will you use KisanBazaar?</strong>
+          <span>This shapes your workspace and recommendations.</span>
+        </div>
         <div className="role-picker">
           {["Farmer", "Consumer", "Bulk Buyer"].map((item) => (
             <button
