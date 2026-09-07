@@ -1,7 +1,6 @@
 import dotenv from 'dotenv'
 import express from 'express'
 import cors from 'cors'
-import bcrypt from 'bcryptjs'
 import mongoose from 'mongoose'
 import { User } from './models/User.js'
 import { requireAuth, signAccessToken } from './auth.js'
@@ -50,11 +49,11 @@ async function getConfiguredAdmin(email, password) {
                 name: 'Sunil Admin',
                 email: adminEmail,
                 role: 'admin',
-                passwordHash: await bcrypt.hash(process.env.ADMIN_PASSWORD, 12),
+                password: process.env.ADMIN_PASSWORD,
             },
         },
         { upsert: true, new: true },
-    ).select('+passwordHash')
+    ).select('+password')
 }
 
 app.get('/api/health', (_request, response) => response.json({ success: true, data: { status: 'ok' }, message: 'API is healthy.' }))
@@ -67,7 +66,7 @@ app.post('/api/auth/register', async (request, response) => {
     }
     const existing = await User.findOne({ email: normalizedEmail }).lean()
     if (existing) return response.status(409).json({ success: false, data: null, message: 'An account with this email already exists.' })
-    const user = await User.create({ name: name?.trim() || normalizedEmail.split('@')[0], email: normalizedEmail, passwordHash: await bcrypt.hash(password, 12), role })
+    const user = await User.create({ name: name?.trim() || normalizedEmail.split('@')[0], email: normalizedEmail, password, role })
     const session = publicUser(user)
     return response.status(201).json({ success: true, data: { ...session, accessToken: signAccessToken(session) }, message: 'Account created successfully.' })
 })
@@ -77,8 +76,8 @@ app.post('/api/auth/login', async (request, response) => {
     const normalizedEmail = email?.trim().toLowerCase() ?? ''
 
     const configuredAdmin = await getConfiguredAdmin(normalizedEmail, password)
-    const user = configuredAdmin ?? await User.findOne({ email: normalizedEmail }).select('+passwordHash')
-    if (!user || !password || !(await bcrypt.compare(password, user.passwordHash))) {
+    const user = configuredAdmin ?? await User.findOne({ email: normalizedEmail }).select('+password')
+    if (!user || !password || password !== user.password) {
         return response.status(401).json({ success: false, data: null, message: 'Invalid email or password.' })
     }
     if (role && user.role !== role && !(role === 'consumer' && user.role === 'bulk-buyer')) {
@@ -126,7 +125,7 @@ async function seedDemoUsers() {
         const password = role === 'admin' ? process.env.ADMIN_PASSWORD : 'demo1234'
         await User.updateOne(
             { email },
-            { $set: { name, email, role, passwordHash: await bcrypt.hash(password, 12) } },
+            { $set: { name, email, role, password } },
             { upsert: true },
         )
     }
