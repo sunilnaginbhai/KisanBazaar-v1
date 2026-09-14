@@ -217,7 +217,7 @@ function Shell() {
           <span className="mark">
             <Leaf size={18} />
           </span>
-          <span>KisanBazaar</span>
+          <span>ECOVISION</span>
         </Link>
         <nav className={open ? "nav-links open" : "nav-links"}>
           {links.map((link) => (
@@ -1871,7 +1871,7 @@ function Login() {
           <span className="mark">
             <Leaf size={18} />
           </span>{" "}
-          KisanBazaar
+          ECOVISION
         </Link>
         <h1>
           Direct connections.
@@ -2173,7 +2173,7 @@ function PortalShell() {
             <span className="mark">
               <Leaf size={18} />
             </span>
-            <span>KisanBazaar</span>
+            <span>ECOVISION</span>
           </Link>
           <div className="portal-label">{portal} portal</div>
           {portalLinks.map(([label, to, Icon]) => (
@@ -2198,7 +2198,7 @@ function PortalShell() {
             <Leaf size={18} />
           </span>
           <span>
-            KisanBazaar
+            ECOVISION
           </span>
         </Link>
         <label className="mobile-topbar-search">
@@ -2615,7 +2615,7 @@ function Register() {
           <span className="mark">
             <Leaf size={18} />
           </span>{" "}
-          KisanBazaar
+          ECOVISION
         </Link>
         <p className="eyebrow">BUILD A FAIRER CHAIN</p>
         <h1>
@@ -2652,7 +2652,7 @@ function Register() {
           Start with a few details. You can complete your profile later.
         </p>
         <div className="role-picker-heading">
-          <strong>How will you use KisanBazaar?</strong>
+          <strong>How will you use ECOVISION?</strong>
           <span>This shapes your workspace and recommendations.</span>
         </div>
         <div className="role-picker">
@@ -2969,7 +2969,7 @@ function Logistics() {
           <div className="ai-results"><Sparkles size={20} /><div><p className="eyebrow">AI ROUTE OPTIMIZATION RESULTS</p><h2>A more efficient route is ready.</h2><span>Using the Pune handoff reduces distance, time, and fuel usage without changing the delivery window.</span></div><div className="ai-savings"><b>38 km</b><small>distance saved</small><b>42 min</b><small>time saved</small><b>₹1,240</b><small>cost saved</small></div></div>
         </div>
       </div>
-      <footer className="logistics-footer"><span>© 2026 KisanBazaar Logistics</span><span><ShieldCheck size={14} /> Secure route monitoring · Last synced just now</span></footer>
+      <footer className="logistics-footer"><span>© 2026 ECOVISION Logistics</span><span><ShieldCheck size={14} /> Secure route monitoring · Last synced just now</span></footer>
     </section>
   );
 }

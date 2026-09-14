@@ -1,4 +1,4 @@
-# KisanBazaar
+# ECOVISION
 
 A farm-to-market marketplace for farmers, buyers, and administrators.
 

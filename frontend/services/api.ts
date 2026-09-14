@@ -1,7 +1,7 @@
 const configuredApiUrl = import.meta.env.VITE_API_URL?.trim()
 
 export const API_BASE_URL = (configuredApiUrl || 'https://kisanbazaar-v1-backend.onrender.com/api').replace(/\/+$/, '')
-const accessTokenKey = 'kisanbazaar_access_token'
+const accessTokenKey = 'ecovision_access_token'
 let activeRequestCount = 0
 const requestListeners = new Set<() => void>()
 
