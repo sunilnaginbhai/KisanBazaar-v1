@@ -355,9 +355,19 @@ function Shell({
   const location = useLocation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
   const [cart, setCart] = useState<CartItem[]>(
     () => getStoredCart(),
   );
+  useEffect(() => {
+    let active = true;
+    void authService.getCurrentUser().then((user) => {
+      if (active) setSession(user);
+    });
+    return () => {
+      active = false;
+    };
+  }, [location.pathname]);
   useEffect(() => {
     localStorage.setItem("direct-market-cart", JSON.stringify(cart));
   }, [cart]);
@@ -435,7 +445,7 @@ function Shell({
               <option value="Gujarati">Gujarati</option>
             </select>
           </label>
-          <Link to="/login" className="nav-sell">
+          <Link to={session?.role === "farmer" ? "/farmer/products" : "/login"} className="nav-sell">
             {translate(language, "startSelling")} <ArrowRight size={15} />
           </Link>
         </nav>
@@ -456,7 +466,13 @@ function Shell({
             <ShoppingCart size={20} />
             {cart.length > 0 && <em>{cart.reduce((sum, item) => sum + item.quantity, 0)}</em>}
           </button>
-          <button className="avatar">AK</button>
+          <button
+            className="avatar"
+            aria-label={session ? "Open profile" : "Sign in"}
+            onClick={() => navigate(session ? "/profile" : "/login")}
+          >
+            {session ? session.name.slice(0, 2).toUpperCase() : "AK"}
+          </button>
         </div>
       </header>
       <main>
