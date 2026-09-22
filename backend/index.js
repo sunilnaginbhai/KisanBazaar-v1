@@ -92,7 +92,7 @@ app.post('/api/auth/demo-login', async (request, response) => {
         return response.status(404).json({ success: false, data: null, message: 'Demo access is disabled.' })
     }
     const demoEmails = {
-        farm: 'farmer@demo.local',
+        farmer: 'farmer@demo.local',
         'bulk-buyer': 'buyer@demo.local',
         admin: process.env.ADMIN_EMAIL,
     }

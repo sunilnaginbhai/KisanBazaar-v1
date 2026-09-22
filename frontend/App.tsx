@@ -1062,7 +1062,7 @@ function Home({
             <Link to="/marketplace" className="primary-button warm">
               {translate(language, "browseMarketplace")} <ArrowRight size={16} />
             </Link>
-            <Link to="/register" className="light-link">
+            <Link to={session?.role === "farmer" ? "/farmer/products" : "/register"} className="light-link">
               {translate(language, "startSelling")} <ArrowRight size={16} />
             </Link>
           </div>
@@ -2587,7 +2587,11 @@ function PortalShell({
               <option value="Gujarati">Gujarati</option>
             </select>
           </label>
-          {!session && (
+          {session ? (
+            <Link to="/farmer/products" className="nav-sell">
+              {translate(language, "startSelling")} <ArrowRight size={15} />
+            </Link>
+          ) : (
             <>
               <Link to="/login" className="nav-sell">
                 {translate(language, "signIn")} <ArrowRight size={15} />
