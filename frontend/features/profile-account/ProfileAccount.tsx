@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowRight, Bell, Camera, Check, CheckCircle2, Download, Eye, EyeOff, Globe2, Lock, LogOut, MapPin, Save, ShieldCheck, Smartphone, Trash2, UserRound } from 'lucide-react'
 import type { Session } from '../../services/authService'
+import { readStorage } from '../../utils/storage'
 import './profile-account.css'
 
 type ProfileData = {
@@ -48,7 +49,6 @@ export function ProfileAccount({ session, onLogout }: { session: Session; onLogo
   const [kycSaved, setKycSaved] = useState(false)
   const [kycStep, setKycStep] = useState(1)
   const [kyc, setKyc] = useState<KycData>(() => {
-    const stored = localStorage.getItem(`${kycStorageKey}-${session.email}`)
     const defaults: KycData = {
       documentType: 'Aadhaar',
       documentNumber: '',
@@ -62,12 +62,11 @@ export function ProfileAccount({ session, onLogout }: { session: Session; onLogo
       documentSize: 0,
       status: 'Not started',
     }
-    return stored ? { ...defaults, ...JSON.parse(stored) as Partial<KycData> } : defaults
+    return { ...defaults, ...readStorage<Partial<KycData> | null>(`${kycStorageKey}-${session.email}`, null) }
   })
   const profileStorageKey = `${storageKey}-${session.email}`
   const [profile, setProfile] = useState<ProfileData>(() => {
-    const stored = localStorage.getItem(profileStorageKey)
-    return stored ? JSON.parse(stored) as ProfileData : {
+    return readStorage<ProfileData>(profileStorageKey, {
       username: session.email.split('@')[0],
       phone: '',
       bio: '',
@@ -83,7 +82,7 @@ export function ProfileAccount({ session, onLogout }: { session: Session; onLogo
       orderNotifications: true,
       priceAlerts: true,
       aiRecommendations: true,
-    }
+    })
   })
 
   useEffect(() => {

@@ -104,6 +104,15 @@ const categories: Array<"All" | ProductCategory> = [
 const cartStorageKey = "direct-market-cart";
 const languageStorageKey = "eco-market-language";
 
+function readStoredJson<T>(key: string, fallback: T): T {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? (JSON.parse(value) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 const uiText: Record<Language, Record<string, string>> = {
   English: {
     home: "Home",
@@ -266,22 +275,12 @@ const getBulkTier = (product: Product, quantity: number) =>
   );
 
 const getFarmerListing = (productId: string) => {
-  try {
-    const listings = JSON.parse(localStorage.getItem("direct-market-farmer-pricing") ?? "{}") as Record<string, { price: number; stock: number }>;
-    return listings[productId];
-  } catch {
-    return undefined;
-  }
+  const listings = readStoredJson<Record<string, { price: number; stock: number }>>("direct-market-farmer-pricing", {});
+  return listings[productId];
 };
 
 function getStoredCart(): CartItem[] {
-  try {
-    return JSON.parse(
-      localStorage.getItem(cartStorageKey) ?? "[]",
-    ) as CartItem[];
-  } catch {
-    return [];
-  }
+  return readStoredJson<CartItem[]>(cartStorageKey, []);
 }
 
 function addToStoredCart(product: Product, quantity = 1, isBulk = false) {
@@ -357,10 +356,7 @@ function Shell({
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>(
-    () =>
-      JSON.parse(
-        localStorage.getItem("direct-market-cart") ?? "[]",
-      ) as CartItem[],
+    () => getStoredCart(),
   );
   useEffect(() => {
     localStorage.setItem("direct-market-cart", JSON.stringify(cart));
@@ -1851,7 +1847,7 @@ function Detail({ add, language }: { add: (product: Product, quantity?: number, 
           {isBulkOrder && (
             <button className="outline-button" type="button" onClick={() => {
               const quote = { id: `BQ-${Date.now().toString().slice(-6)}`, productId: product.id, product: product.name, quantity, unit: product.unit, unitPrice: currentPrice, total: totalEstimate, createdAt: new Date().toISOString() };
-              const quotes = JSON.parse(localStorage.getItem("direct-market-bulk-quotes") ?? "[]") as typeof quote[];
+              const quotes = readStoredJson<typeof quote[]>("direct-market-bulk-quotes", []);
               localStorage.setItem("direct-market-bulk-quotes", JSON.stringify([quote, ...quotes]));
               setQuoteMessage(`Quote ${quote.id} requested for ${quantity} ${product.unit}.`);
             }}>
@@ -3105,7 +3101,7 @@ function Checkout({ language }: { language: Language }) {
     if (step === 4) {
       const cart = getStoredCart();
       const profile = customer
-        ? JSON.parse(localStorage.getItem(`direct-market-profile-${customer.email}`) ?? "{}") as { phone?: string }
+        ? readStoredJson<{ phone?: string }>(`direct-market-profile-${customer.email}`, {})
         : {};
       saveOrder({
         id: `DM-${Date.now().toString().slice(-6)}`,

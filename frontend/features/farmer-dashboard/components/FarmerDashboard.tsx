@@ -4,6 +4,7 @@ import { ArrowUpRight, Boxes, Package, Sparkles } from 'lucide-react'
 import { DashboardPortal } from '../../portal/DashboardPortal'
 import { aiService } from '../../../services/aiService'
 import { products } from '../../../mock/products'
+import { readStorage } from '../../../utils/storage'
 
 const farmerPricingStorageKey = 'direct-market-farmer-pricing'
 
@@ -48,7 +49,7 @@ export function FarmerDashboard() {
             setPricingMessage('Enter a valid price and a whole-number stock quantity.')
             return
         }
-        const stored = JSON.parse(localStorage.getItem(farmerPricingStorageKey) ?? '{}') as Record<string, { price: number; stock: number }>
+        const stored = readStorage<Record<string, { price: number; stock: number }>>(farmerPricingStorageKey, {})
         stored[selectedProduct.id] = { price: numericPrice, stock: numericStock }
         localStorage.setItem(farmerPricingStorageKey, JSON.stringify(stored))
         setPricingMessage('Price and stock saved as farmer-set listing details.')

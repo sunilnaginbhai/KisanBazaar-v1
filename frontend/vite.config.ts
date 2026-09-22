@@ -3,7 +3,25 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import tailwindcss from '@tailwindcss/vite'
 
-const clientRoutes = ['login', 'register', 'profile', 'marketplace', 'cart', 'compare', 'reviews', 'directory', 'impact', 'features', 'ai-crop-advisor']
+const clientRoutes = [
+  'login',
+  'register',
+  'profile',
+  'marketplace',
+  'cart',
+  'compare',
+  'reviews',
+  'directory',
+  'impact',
+  'features',
+  'ai-crop-advisor',
+  'checkout',
+  'orders',
+  'logistics',
+  'farmer',
+  'buyer',
+  'admin',
+]
 
 function staticRouteFallbacks() {
   return {
