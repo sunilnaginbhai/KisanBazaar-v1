@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ArrowUpRight, BarChart3, Download, Filter, MessageCircle, Package, Plus, Send, Sparkles, Truck, Users, WalletCards, ShieldCheck, Star, Leaf, ShoppingBag } from 'lucide-react'
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { getStoredOrders } from '../../services/orderStore'
 
 type PortalRole = 'Farmer' | 'Buyer' | 'Admin'
 
@@ -50,8 +51,15 @@ export function DashboardPortal({ role }: DashboardPortalProps) {
   const [range, setRange] = useState('Last 30 days')
   const [chatMessage, setChatMessage] = useState('')
   const [chatReply, setChatReply] = useState('')
+  const [customerOrders, setCustomerOrders] = useState(() => role === 'Admin' ? getStoredOrders() : [])
   const copy = roleCopy[role]
   const isAdmin = role === 'Admin'
+  useEffect(() => {
+    if (!isAdmin) return
+    const refreshOrders = () => setCustomerOrders(getStoredOrders())
+    window.addEventListener('storage', refreshOrders)
+    return () => window.removeEventListener('storage', refreshOrders)
+  }, [isAdmin])
   const metrics = useMemo(() => isAdmin
     ? [['2,400', 'Total Farmers', Users], ['8,420', 'Active Products', Package], ['12,840', 'Total Orders', ShoppingBag], ['₹1.8 Cr', 'Platform Revenue', WalletCards]]
     : role === 'Farmer'
@@ -91,6 +99,8 @@ export function DashboardPortal({ role }: DashboardPortalProps) {
       </div>
 
       {isAdmin && <div className="dashboard-secondary-metrics">{[['2,280', 'Verified Farmers', ShieldCheck], ['1,460', 'Organic Products', Leaf], ['186', 'FPOs Registered', Users], ['4.8 / 5', 'Average Rating', Star]].map(([value, label, Icon]) => <div className="secondary-metric" key={label as string}><Icon size={16} /><span><strong>{value as string}</strong><small>{label as string}</small></span></div>)}</div>}
+
+      {isAdmin && <div className="data-panel admin-customer-orders"><div className="panel-title"><div><h2>Customer orders</h2><span>{customerOrders.length} orders placed by users</span></div><ShoppingBag size={18} /></div>{customerOrders.length === 0 ? <p className="muted">No customer orders have been placed yet.</p> : <div className="admin-order-list">{customerOrders.slice(0, 8).map((order) => <article className="admin-order-row" key={order.id}><div><b>{order.customerName}</b><small>{order.customerEmail} · {order.customerPhone}</small></div><div><strong>{order.items.map((item) => `${item.name} × ${item.quantity} ${item.unit}`).join(', ')}</strong><small>{order.id} · {new Date(order.createdAt).toLocaleString()}</small></div><b>₹{order.total.toLocaleString()}</b></article>)}</div>}</div>}
 
       {role === 'Buyer' && <section className="dashboard-role-section buyer-dashboard-section"><div className="panel-title"><div><p className="eyebrow">PERSONALIZED FOR YOU</p><h2>Recommended Products</h2></div><Link className="text-button" to="/marketplace">Shop all <ArrowUpRight size={14} /></Link></div><div className="recommendation-grid">{recommendations.map((item) => <Link className="recommendation-card" to="/marketplace" key={item.name}><img src={item.image} alt="" /><div><b>{item.name}</b><small>{item.farmer}</small><strong>{item.price}<em>{item.unit}</em></strong><span><Star size={12} fill="currentColor" /> {item.rating}</span></div></Link>)}</div></section>}
 

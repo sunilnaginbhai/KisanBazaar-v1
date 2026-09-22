@@ -2291,6 +2291,105 @@ h3 i {
   color: #c78332;
 }
 
+.bulk-order-panel,
+.bulk-tier-panel {
+  border: 1px solid var(--line);
+  background: #fbfcf8;
+  padding: 14px;
+  margin: 14px 0;
+}
+
+.bulk-order-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.bulk-order-summary {
+  display: grid;
+  gap: 4px;
+  text-align: right;
+}
+
+.bulk-order-summary small,
+.bulk-order-summary em,
+.bulk-tier-panel .panel-title span {
+  color: #77857b;
+  font-size: 11px;
+}
+
+.bulk-order-summary em {
+  font-style: normal;
+}
+
+.bulk-tier-panel .panel-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 10px;
+}
+
+.bulk-tier-panel h3 {
+  font-size: 14px;
+  margin: 0;
+}
+
+.bulk-tier-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.bulk-tier-list button {
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 10px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.bulk-tier-list button.active {
+  border-color: var(--green);
+  box-shadow: inset 0 0 0 1px var(--green);
+  background: #f0f6e9;
+}
+
+.bulk-tier-list small {
+  color: #77857b;
+  font-size: 10px;
+}
+
+.farmer-price-tag,
+.bulk-price-tag {
+  display: block;
+  color: var(--green);
+  font-size: 10px;
+  margin-top: 5px;
+}
+
+.bulk-order-panel+.bulk-tier-panel+.detail-description {
+  margin-top: 18px;
+}
+
+@media (max-width: 720px) {
+  .bulk-order-panel {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .bulk-order-summary {
+    text-align: left;
+  }
+
+  .bulk-tier-list {
+    grid-template-columns: 1fr;
+  }
+}
+
 .detail-description {
   color: #728078;
   line-height: 1.7;

@@ -22,6 +22,7 @@ import {
   ChevronDown,
   ClipboardList,
   Filter,
+  Globe2,
   LayoutDashboard,
   Leaf,
   MapPin,
@@ -54,6 +55,8 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+
+
 import { productService } from "./services/productService";
 import type { Product, ProductCategory } from "./mock/products";
 import { products } from "./mock/products";
@@ -83,11 +86,13 @@ import { ProfileAccount } from "./features/profile-account";
 import { FeatureDirectory } from "./features/feature-directory";
 import { Impact as ImpactPage } from "./components/Impact";
 import { getApiLoadingSnapshot, subscribeToApiLoading } from "./services/api";
+import { saveOrder } from "./services/orderStore";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "./App.css";
 
-type CartItem = { product: Product; quantity: number };
+type Language = "English" | "Hindi" | "Gujarati";
+type CartItem = { product: Product; quantity: number; isBulk?: boolean; unitPrice?: number };
 const categories: Array<"All" | ProductCategory> = [
   "All",
   "Vegetables",
@@ -97,6 +102,177 @@ const categories: Array<"All" | ProductCategory> = [
   "Cash crops",
 ];
 const cartStorageKey = "direct-market-cart";
+const languageStorageKey = "eco-market-language";
+
+const uiText: Record<Language, Record<string, string>> = {
+  English: {
+    home: "Home",
+    marketplace: "Marketplace",
+    toolkit: "Toolkit",
+    features: "Features",
+    logistics: "Logistics",
+    dashboard: "Dashboard",
+    impact: "Impact",
+    howItWorks: "How it works",
+    farmers: "Farmers",
+    startSelling: "Start selling",
+    browseMarketplace: "Browse marketplace",
+    newToMarket: "New to the market?",
+    joinMarketplace: "Join the marketplace",
+    farmersConnected: "Farmers connected",
+    productsTraded: "Products traded",
+    statesAcrossIndia: "States across India",
+    homeTitle1: "Fresh produce, fair prices",
+    homeTitle2: "from verified farms",
+    homeSubtitle: "Source trusted harvests, compare transparent pricing, and move produce from farm to market with confidence.",
+    signIn: "Sign in",
+    createAccount: "Create account",
+    products: "Products",
+    favorite: "Favourite",
+    profile: "Profile",
+    search: "Search products, farmers...",
+    sort: "Sort:",
+    allStates: "All states",
+    organicOnly: "Organic only",
+    verifiedSeller: "Verified seller",
+    clearFilters: "Clear filters",
+    bulkPurchase: "Bulk Purchase",
+    language: "Language",
+    gridView: "Grid View",
+    listView: "List View",
+    farmerPrice: "Farmer Price",
+    addToBasket: "Add to basket",
+    addToCart: "Add to cart",
+    checkout: "Checkout",
+    orderSummary: "Order Summary",
+    quantity: "Quantity",
+    availability: "available",
+  },
+  Hindi: {
+    home: "होम",
+    marketplace: "मार्केटप्लेस",
+    toolkit: "उपकरण",
+    features: "विशेषताएँ",
+    logistics: "लॉजिस्टिक्स",
+    dashboard: "डैशबोर्ड",
+    impact: "प्रभाव",
+    howItWorks: "यह कैसे काम करता है",
+    farmers: "किसान",
+    startSelling: "बेचना शुरू करें",
+    browseMarketplace: "मार्केटप्लेस देखें",
+    newToMarket: "मार्केट में नए हैं?",
+    joinMarketplace: "मार्केटप्लेस में शामिल हों",
+    farmersConnected: "किसान जुड़ें",
+    productsTraded: "उत्पाद लेन-देन",
+    statesAcrossIndia: "भारत के राज्य",
+    homeTitle1: "ताज़ा उपज, निष्पक्ष कीमत",
+    homeTitle2: "सत्यापित खेतों से",
+    homeSubtitle: "विश्वसनीय फसलें चुनें, पारदर्शी कीमतों की तुलना करें और खेत से बाजार तक सामान को भरोसे के साथ ले जाएं।",
+    signIn: "साइन इन",
+    createAccount: "अकाउंट बनाएं",
+    products: "उत्पाद",
+    favorite: "पसंदीदा",
+    profile: "प्रोफ़ाइल",
+    search: "उत्पाद, किसान खोजें...",
+    sort: "क्रमबद्ध करें:",
+    allStates: "सभी राज्य",
+    organicOnly: "केवल जैविक",
+    verifiedSeller: "सत्यापित विक्रेता",
+    clearFilters: "फ़िल्टर साफ़ करें",
+    bulkPurchase: "बल्क खरीद",
+    language: "भाषा",
+    gridView: "ग्रिड दृश्य",
+    listView: "सूची दृश्य",
+    farmerPrice: "किसान कीमत",
+    addToBasket: "कार्ट में जोड़ें",
+    addToCart: "कार्ट में जोड़ें",
+    checkout: "चेकआउट",
+    orderSummary: "ऑर्डर सारांश",
+    quantity: "मात्रा",
+    availability: "उपलब्ध",
+  },
+  Gujarati: {
+    home: "હોમ",
+    marketplace: "માર્કેટપ્લેસ",
+    toolkit: "ટૂલકિટ",
+    features: "વિશેષતા",
+    logistics: "લોગિસ્ટિક્સ",
+    dashboard: "ડેશબોર્ડ",
+    impact: "પ્રભાવ",
+    howItWorks: "આ કેવી રીતે કામ કરે છે",
+    farmers: "ખેડૂતો",
+    startSelling: "વેચાણ શરૂ કરો",
+    browseMarketplace: "માર્કેટપ્લેસ જુઓ",
+    newToMarket: "માર્કેટમાં નવો છો?",
+    joinMarketplace: "માર્કેટપ્લેસમાં જોડાવા",
+    farmersConnected: "ખેડૂતો જોડાયા",
+    productsTraded: "ઉત્પાદનોનો વેપાર",
+    statesAcrossIndia: "ભારતના રાજ્યો",
+    homeTitle1: "તાજા ઉત્પાદનો, ન્યાયી ભાવ",
+    homeTitle2: "ચકાસેલ ખેતરોમાંથી",
+    homeSubtitle: "વિશ્વસનીય પાક પસંદ કરો, પારદર્શક ભાવે સરખામણી કરો અને ખેતરા થી બજાર સુધી ઉપજ સુરક્ષિત રીતે ખસેડો.",
+    signIn: "સાઇન ઇન",
+    createAccount: "એકાઉન્ટ બનાવો",
+    products: "ઉત્પાદનો",
+    favorite: "પસંદ",
+    profile: "પ્રોફાઇલ",
+    search: "ઉત્પાદન, ખેડૂત શોધો...",
+    sort: "ગોઠવો:",
+    allStates: "બધા રાજ્ય",
+    organicOnly: "ફક્ત ઓર્ગેનિક",
+    verifiedSeller: "ચકાસેલ વિતરક",
+    clearFilters: "ફિલ્ટર સાફ કરો",
+    bulkPurchase: "બલ્ક પર્છવું",
+    language: "ભાષા",
+    gridView: "ગ્રિડ દૃશ્ય",
+    listView: "યાદી દૃશ્ય",
+    farmerPrice: "ખેડૂતની ભાવ",
+    addToBasket: "કાર्टમાં ઉમેરો",
+    addToCart: "કાર્ટમાં ઉમેરો",
+    checkout: "ચેકઆઉટ",
+    orderSummary: "ઓર્ડર સારાંશ",
+    quantity: "જથ્થો",
+    availability: "ઉપલબ્ધ",
+  },
+};
+
+const getStoredLanguage = (): Language => {
+  const stored = localStorage.getItem(languageStorageKey) as Language | null;
+  return stored === "Hindi" || stored === "Gujarati" ? stored : "English";
+};
+
+const translate = (language: Language, key: string) =>
+  uiText[language]?.[key] ?? uiText.English[key] ?? key;
+
+const getProductUnitPrice = (product: Product, isBulk = false) =>
+  isBulk && product.bulkPrice ? product.bulkPrice : product.price;
+
+type BulkTier = { minimum: number; discount: number; price: number };
+
+const getBulkTiers = (product: Product): BulkTier[] => {
+  const minimum = product.bulkMinimum ?? 25;
+  const basePrice = product.bulkPrice ?? product.price;
+  return [
+    { minimum, discount: 0, price: basePrice },
+    { minimum: minimum * 2, discount: 3, price: Math.round(basePrice * 0.97) },
+    { minimum: minimum * 4, discount: 6, price: Math.round(basePrice * 0.94) },
+  ];
+};
+
+const getBulkTier = (product: Product, quantity: number) =>
+  getBulkTiers(product).reduce(
+    (active, tier) => (quantity >= tier.minimum ? tier : active),
+    getBulkTiers(product)[0],
+  );
+
+const getFarmerListing = (productId: string) => {
+  try {
+    const listings = JSON.parse(localStorage.getItem("direct-market-farmer-pricing") ?? "{}") as Record<string, { price: number; stock: number }>;
+    return listings[productId];
+  } catch {
+    return undefined;
+  }
+};
 
 function getStoredCart(): CartItem[] {
   try {
@@ -108,16 +284,18 @@ function getStoredCart(): CartItem[] {
   }
 }
 
-function addToStoredCart(product: Product) {
+function addToStoredCart(product: Product, quantity = 1, isBulk = false) {
   const cart = getStoredCart();
-  const existing = cart.find((item) => item.product.id === product.id);
+  const existing = cart.find(
+    (item) => item.product.id === product.id && Boolean(item.isBulk) === isBulk,
+  );
   const next = existing
     ? cart.map((item) =>
-      item.product.id === product.id
-        ? { ...item, quantity: item.quantity + 1 }
+      item.product.id === product.id && Boolean(item.isBulk) === isBulk
+        ? { ...item, quantity: item.quantity + quantity, unitPrice: item.unitPrice ?? (isBulk && product.bulkPrice ? product.bulkPrice : product.price) }
         : item,
     )
-    : [...cart, { product, quantity: 1 }];
+    : [...cart, { product, quantity, isBulk, unitPrice: isBulk && product.bulkPrice ? product.bulkPrice : product.price }];
   localStorage.setItem(cartStorageKey, JSON.stringify(next));
   localStorage.setItem(
     "direct-market-cart-count",
@@ -125,14 +303,14 @@ function addToStoredCart(product: Product) {
   );
 }
 
-function PersistentCart() {
+function PersistentCart({ language }: { language: Language }) {
   const [items, setItems] = useState<CartItem[]>(getStoredCart);
-  const change = (id: string, amount: number) => {
+  const change = (id: string, amount: number, isBulk = false) => {
     setItems((current) => {
       const next = current
         .map((item) =>
-          item.product.id === id
-            ? { ...item, quantity: Math.max(0, item.quantity + amount) }
+          item.product.id === id && Boolean(item.isBulk) === isBulk
+            ? { ...item, quantity: Math.max(0, item.quantity + amount), unitPrice: item.unitPrice ?? item.product.price }
             : item,
         )
         .filter((item) => item.quantity > 0);
@@ -150,25 +328,31 @@ function PersistentCart() {
       <div className="cart-tools">
         <CouponField />
       </div>
-      <Cart items={items} change={change} />
+      <Cart items={items} change={change} language={language} />
     </>
   );
 }
 
-function EnhancedDetail({ add }: { add: (product: Product) => void }) {
+function EnhancedDetail({ add, language }: { add: (product: Product) => void; language: Language }) {
   const { id } = useParams();
   const product = products.find((item) => item.id === id);
   return (
     <>
       <RecentlyViewedRecorder productId={id ?? ""} />
-      <Detail add={add} />
+      <Detail add={add} language={language} />
       <ProductReviewPanel product={product ?? products[0]} />
       <RecentlyViewed excludeId={id} />
     </>
   );
 }
 
-function Shell() {
+function Shell({
+  language,
+  onLanguageChange,
+}: {
+  language: Language;
+  onLanguageChange: (nextLanguage: Language) => void;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -181,34 +365,35 @@ function Shell() {
   useEffect(() => {
     localStorage.setItem("direct-market-cart", JSON.stringify(cart));
   }, [cart]);
-  const add = (product: Product) =>
+  const add = (product: Product, quantity = 1, isBulk = false) =>
     setCart((current) => {
-      const item = current.find((entry) => entry.product.id === product.id);
+      const item = current.find(
+        (entry) => entry.product.id === product.id && Boolean(entry.isBulk) === isBulk,
+      );
       return item
         ? current.map((entry) =>
-          entry.product.id === product.id
-            ? { ...entry, quantity: entry.quantity + 1 }
+          entry.product.id === product.id && Boolean(entry.isBulk) === isBulk
+            ? { ...entry, quantity: entry.quantity + quantity, unitPrice: entry.unitPrice ?? (isBulk && product.bulkPrice ? product.bulkPrice : product.price) }
             : entry,
         )
-        : [...current, { product, quantity: 1 }];
+        : [...current, { product, quantity, isBulk, unitPrice: isBulk && product.bulkPrice ? product.bulkPrice : product.price }];
     });
-  const change = (id: string, amount: number) =>
+  const change = (id: string, amount: number, isBulk = false) =>
     setCart((current) =>
       current
         .map((item) =>
-          item.product.id === id
-            ? { ...item, quantity: Math.max(0, item.quantity + amount) }
+          item.product.id === id && Boolean(item.isBulk) === isBulk
+            ? { ...item, quantity: Math.max(0, item.quantity + amount), unitPrice: item.unitPrice ?? item.product.price }
             : item,
         )
         .filter((item) => item.quantity > 0),
     );
   const links = [
-    { label: "Home", to: "/" },
-    { label: "Marketplace", to: "/marketplace" },
-    { label: "How it works", to: "/#how" },
-    { label: "Farmers", to: "/register" },
-    { label: "Logistics", to: "/logistics" },
-    { label: "Impact", to: "/impact" },
+    { label: translate(language, "home"), to: "/" },
+    { label: translate(language, "marketplace"), to: "/marketplace" },
+    { label: translate(language, "farmers"), to: "/register" },
+    { label: translate(language, "logistics"), to: "/logistics" },
+    { label: translate(language, "impact"), to: "/impact" },
   ];
   return (
     <div className="app-shell">
@@ -225,8 +410,37 @@ function Shell() {
               {link.label}
             </Link>
           ))}
+          <details className="feature-nav">
+            <summary>
+              {translate(language, "features")} <ChevronDown size={14} />
+            </summary>
+            <div className="feature-nav-menu">
+              <Link to="/directory" onClick={() => setOpen(false)}>All tools</Link>
+              <Link to="/reviews" onClick={() => setOpen(false)}>Reviews</Link>
+              <Link to="/ai-crop-advisor" onClick={() => setOpen(false)}>AI Crop Advisor</Link>
+              {insightFeatures.map((feature) => (
+                <Link key={feature.kind} to={`/features/${feature.kind}`} onClick={() => setOpen(false)}>
+                  {feature.label}
+                </Link>
+              ))}
+            </div>
+          </details>
+          <label className="language-selector">
+            <Globe2 size={15} />
+            <select
+              value={language}
+              aria-label="Select language"
+              onChange={(event) => {
+                onLanguageChange(event.target.value as Language);
+              }}
+            >
+              <option value="English">English</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Gujarati">Gujarati</option>
+            </select>
+          </label>
           <Link to="/login" className="nav-sell">
-            Start selling <ArrowRight size={15} />
+            {translate(language, "startSelling")} <ArrowRight size={15} />
           </Link>
         </nav>
         <div className="top-actions">
@@ -251,10 +465,10 @@ function Shell() {
       </header>
       <main>
         <Routes>
-          <Route path="/" element={<Home add={add} />} />
-          <Route path="/marketplace" element={<Marketplace add={add} />} />
-          <Route path="/marketplace/:id" element={<Detail add={add} />} />{" "}
-          <Route path="/cart" element={<Cart items={cart} change={change} />} />{" "}
+          <Route path="/" element={<Home add={add} language={language} />} />
+          <Route path="/marketplace" element={<Marketplace add={add} language={language} />} />
+          <Route path="/marketplace/:id" element={<Detail add={add} language={language} />} />{" "}
+          <Route path="/cart" element={<Cart items={cart} change={change} language={language} />} />{" "}
           <Route path="/compare" element={<ComparisonPage />} />
           <Route path="/reviews" element={<ReviewsPage />} />{" "}
           <Route path="/ai-crop-advisor" element={<CropAdvisor />} />
@@ -262,7 +476,40 @@ function Shell() {
           <Route path="/impact" element={<ImpactPage />} />
           <Route path="/features" element={<FeatureHub />} />
           <Route path="/features/:kind" element={<MarketInsights />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<Login language={language} />} />
+          <Route path="/register" element={<Register language={language} />} />
+          <Route
+            path="/logistics"
+            element={
+              <SessionGuard>
+                <Logistics language={language} />
+              </SessionGuard>
+            }
+          />
+          <Route
+            path="/checkout"
+            element={
+              <SessionGuard>
+                <Checkout language={language} />
+              </SessionGuard>
+            }
+          />
+          <Route
+            path="/orders"
+            element={
+              <SessionGuard>
+                <Orders language={language} />
+              </SessionGuard>
+            }
+          />
+          <Route
+            path="/orders/:id"
+            element={
+              <SessionGuard>
+                <OrderDetail language={language} />
+              </SessionGuard>
+            }
+          />
         </Routes>
       </main>{" "}
       <nav className="bottom-nav">
@@ -298,7 +545,7 @@ function Shell() {
 
 gsap.registerPlugin(ScrollTrigger);
 
-function LandingMotion() {
+export function LandingMotion() {
   const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const scope = root.current;
@@ -720,9 +967,11 @@ function LandingMotion() {
 function Home({
   add,
   session = null,
+  language,
 }: {
   add: (product: Product) => void;
   session?: Session | null;
+  language: Language;
 }) {
   const [activeCategory, setActiveCategory] = useState("Vegetables");
   const [notice, setNotice] = useState("");
@@ -808,47 +1057,43 @@ function Home({
       <section className="landing-hero">
         <div className="landing-hero-copy">
           <h1>
-            From Your Farm.
+            {translate(language, "homeTitle1")}
             <br />
-            <b>Direct to Their Door.</b>
+            <b>{translate(language, "homeTitle2")}</b>
           </h1>
-          <p>
-            Better prices for farmers. Better value for buyers. One practical
-            marketplace for fresh produce, trusted supply, and dependable
-            delivery.
-          </p>
+          <p>{translate(language, "homeSubtitle")}</p>
           <div className="hero-buttons">
             <Link to="/marketplace" className="primary-button warm">
-              Browse marketplace <ArrowRight size={16} />
+              {translate(language, "browseMarketplace")} <ArrowRight size={16} />
             </Link>
             <Link to="/register" className="light-link">
-              Start selling <ArrowRight size={16} />
+              {translate(language, "startSelling")} <ArrowRight size={16} />
             </Link>
           </div>
           {!session && (
             <div className="guest-hero-callout">
-              <strong>New to Direct Market?</strong>
+              <strong>{translate(language, "newToMarket")}</strong>
               <span>
                 Create a free account to save products, track orders, and access
                 your personalized dashboard.
               </span>
               <Link to="/register">
-                Join the marketplace <ArrowRight size={14} />
+                {translate(language, "joinMarketplace")} <ArrowRight size={14} />
               </Link>
             </div>
           )}
           <div className="hero-stats">
             <span>
               <b>2,840+</b>
-              <small>farmers connected</small>
+              <small>{translate(language, "farmersConnected")}</small>
             </span>
             <span>
               <b>14,200+</b>
-              <small>products traded</small>
+              <small>{translate(language, "productsTraded")}</small>
             </span>
             <span>
-              <b>18 states</b>
-              <small>across India</small>
+              <b>18</b>
+              <small>{translate(language, "statesAcrossIndia")}</small>
             </span>
           </div>
         </div>
@@ -1204,7 +1449,7 @@ function LegacyMarketplace({ add }: { add: (product: Product) => void }) {
   );
 }
 
-function Marketplace({ add }: { add: (product: Product) => void }) {
+function Marketplace({ add, language }: { add: (product: Product) => void; language: Language }) {
   const { data, isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: productService.getProducts,
@@ -1215,6 +1460,7 @@ function Marketplace({ add }: { add: (product: Product) => void }) {
   const [sort, setSort] = useState("Top rated");
   const [organicOnly, setOrganicOnly] = useState(false);
   const [region, setRegion] = useState("All states");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const filtered = useMemo(() => {
     const result = (data?.data ?? []).filter(
       (p) =>
@@ -1245,13 +1491,11 @@ function Marketplace({ add }: { add: (product: Product) => void }) {
     <section className="catalog-page">
       <div className="catalog-heading">
         <div>
-          <p className="eyebrow">VERIFIED SOURCES · PAN-INDIA</p>
+          <p className="eyebrow">{translate(language, "verifiedSources")}</p>
           <h1>
-            India's best <i>marketplace</i>
+            {translate(language, "marketplace")} <i>{translate(language, "marketplace")}</i>
           </h1>
-          <p>
-            Fresh produce, transparent prices and trusted farmers in one place.
-          </p>
+          <p>{translate(language, "marketIntro")}</p>
         </div>
         <div className="catalog-actions">
           <label className="search-box">
@@ -1259,11 +1503,15 @@ function Marketplace({ add }: { add: (product: Product) => void }) {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search products, farmers..."
+              placeholder={translate(language, "search")}
             />
           </label>
+          <div className="market-view-toggle">
+            <button type="button" className={viewMode === "grid" ? "active" : ""} onClick={() => setViewMode("grid")}>{translate(language, "gridView")}</button>
+            <button type="button" className={viewMode === "list" ? "active" : ""} onClick={() => setViewMode("list")}>{translate(language, "listView")}</button>
+          </div>
           <label className="sort-select">
-            Sort:{" "}
+            {translate(language, "sort")} {" "}
             <select value={sort} onChange={(e) => setSort(e.target.value)}>
               <option>Top rated</option>
               <option>Price: low to high</option>
@@ -1294,8 +1542,8 @@ function Marketplace({ add }: { add: (product: Product) => void }) {
       <div className="catalog-layout">
         <aside className="filter-rail">
           <div className="filter-title">
-            <b>REFINE RESULTS {activeFilterCount > 0 && <em>{activeFilterCount}</em>}</b>
-            <button onClick={resetFilters}>Reset all</button>
+            <b>{translate(language, "results")} {activeFilterCount > 0 && <em>{activeFilterCount}</em>}</b>
+            <button onClick={resetFilters}>{translate(language, "resetAll")}</button>
           </div>
           <div className="filter-section">
             <span>
@@ -1355,15 +1603,15 @@ function Marketplace({ add }: { add: (product: Product) => void }) {
         </aside>
         <div className="catalog-results">
           <div className="catalog-meta">
-            <span>{filtered.length} products available</span>
+            <span>{filtered.length} {translate(language, "filteredProducts")}</span>
             <span className="demo-label">
-              Live demo marketplace · updated today
+              {translate(language, "liveMarketplace")}
             </span>
           </div>
           {isLoading ? (
             <div className="loading-state">Loading fresh harvests...</div>
           ) : filtered.length ? (
-            <div className="product-grid">
+            <div className={viewMode === "grid" ? "product-grid" : "product-grid list-view"}>
               {filtered.map((p) => (
                 <Card key={p.id} product={p} add={add} />
               ))}
@@ -1371,9 +1619,9 @@ function Marketplace({ add }: { add: (product: Product) => void }) {
           ) : (
             <div className="empty-state">
               <Search size={28} />
-              <h2>No harvests match those filters</h2>
-              <p>Try a wider region or clear your filters to see every available listing.</p>
-              <button className="primary-button" type="button" onClick={resetFilters}>Clear filters <ArrowRight size={15} /></button>
+              <h2>{translate(language, "noHarvests")}</h2>
+              <p>{translate(language, "tryWiderRegion")}</p>
+              <button className="primary-button" type="button" onClick={resetFilters}>{translate(language, "clearFilters")} <ArrowRight size={15} /></button>
             </div>
           )}
         </div>
@@ -1387,13 +1635,19 @@ function Card({
   add,
 }: {
   product: Product;
-  add: (product: Product) => void;
+  add: (product: Product, quantity?: number, isBulk?: boolean) => void;
 }) {
   const [addedCount, setAddedCount] = useState(0);
+  const farmerListing = getFarmerListing(product.id);
+  const displayedPrice = farmerListing?.price ?? product.price;
   const stockLabel = product.quantity > 3000 ? "In stock" : product.quantity > 500 ? "Limited stock" : "Selling fast";
-  const farmerShare = Math.round(product.price * 0.84);
+  const farmerShare = Math.round(displayedPrice * 0.84);
   const handleAdd = () => {
-    add(product);
+    add(product, 1, false);
+    setAddedCount((count) => count + 1);
+  };
+  const handleBulkAdd = () => {
+    add(product, product.bulkMinimum ?? 25, true);
     setAddedCount((count) => count + 1);
   };
   return (
@@ -1432,20 +1686,35 @@ function Card({
         </div>
         <div className="product-bottom">
           <div>
-            <strong>₹{product.price}</strong>
+            <strong>₹{displayedPrice}</strong>
             <small> / {product.unit}</small>
+            {(farmerListing || product.farmerPriceNote) && (
+              <span className="farmer-price-tag">Direct from farmer · Price set by producer</span>
+            )}
+            {product.bulkPrice && (
+              <span className="bulk-price-tag">
+                Bulk ₹{product.bulkPrice} at {product.bulkMinimum}+ {product.unit}
+              </span>
+            )}
             <span>
               {product.quantity.toLocaleString()} {product.unit} available
             </span>
           </div>
-          <button
-            className="add-button"
-            type="button"
-            aria-label="Add to cart"
-            onClick={handleAdd}
-          >
-            {addedCount ? <><Check size={17} /><span>{addedCount}</span></> : <Plus size={19} />}
-          </button>
+          <div className="card-actions">
+            {product.bulkPrice && (
+              <button type="button" className="bulk-button" onClick={handleBulkAdd}>
+                Bulk
+              </button>
+            )}
+            <button
+              className="add-button"
+              type="button"
+              aria-label="Add to cart"
+              onClick={handleAdd}
+            >
+              {addedCount ? <><Check size={17} /><span>{addedCount}</span></> : <Plus size={19} />}
+            </button>
+          </div>
         </div>
         <CompareButton productId={product.id} />
       </div>
@@ -1453,7 +1722,7 @@ function Card({
   );
 }
 
-function Detail({ add }: { add: (product: Product) => void }) {
+function Detail({ add, language }: { add: (product: Product, quantity?: number, isBulk?: boolean) => void; language: Language }) {
   const { id } = useParams();
   const { data, isLoading } = useQuery({
     queryKey: ["products"],
@@ -1471,6 +1740,13 @@ function Detail({ add }: { add: (product: Product) => void }) {
         </Link>
       </section>
     );
+  const [quantity, setQuantity] = useState(product.bulkMinimum ?? 1);
+  const [isBulkOrder, setIsBulkOrder] = useState(Boolean(product.bulkPrice));
+  const [quoteMessage, setQuoteMessage] = useState("");
+  const bulkTiers = getBulkTiers(product);
+  const activeBulkTier = getBulkTier(product, quantity);
+  const currentPrice = isBulkOrder ? activeBulkTier.price : getProductUnitPrice(product, false);
+  const totalEstimate = currentPrice * quantity;
   const sales = [32, 46, 41, 58, 64, 72, 86].map((value, index) => ({
     week: `W${index + 1}`,
     sales: value + (product.price % 9),
@@ -1486,7 +1762,7 @@ function Detail({ add }: { add: (product: Product) => void }) {
   return (
     <section className="detail-page">
       <Link className="back-link" to="/marketplace">
-        ← Back to marketplace
+        ← {translate(language, "backToMarketplace")}
       </Link>
       <div className="detail-grid">
         <div>
@@ -1497,24 +1773,24 @@ function Detail({ add }: { add: (product: Product) => void }) {
               alt={product.name}
             />
             <span className="detail-image-badge">
-              <ShieldCheck size={14} /> Verified harvest
+              <ShieldCheck size={14} /> {translate(language, "verifiedHarvest")}
             </span>
             <FavoriteButton productId={product.id} />
           </div>
           <div className="detail-facts">
             <span>
               <b>{product.quality}</b>
-              <small>Quality grade</small>
+              <small>{translate(language, "qualityGrade")}</small>
             </span>
             <span>
               <b>{product.harvest}</b>
-              <small>Harvest date</small>
+              <small>{translate(language, "harvestDate")}</small>
             </span>
             <span>
               <b>
                 {product.quantity.toLocaleString()} {product.unit}
               </b>
-              <small>Available now</small>
+              <small>{translate(language, "availableNow")}</small>
             </span>
           </div>
         </div>
@@ -1527,23 +1803,62 @@ function Detail({ add }: { add: (product: Product) => void }) {
             <span className="avatar mini">
               {product.farmer.slice(0, 2).toUpperCase()}
             </span>{" "}
-            Grown by <b>{product.farmer}</b> · {product.location}
+            {translate(language, "grownBy")} <b>{product.farmer}</b> · {product.location}
           </p>
           <div className="detail-price">
-            <strong>₹{product.price}</strong> / {product.unit}
+            <strong>₹{currentPrice}</strong> / {product.unit}
             <span>
               <Star size={15} fill="currentColor" /> {product.rating} · 36
               reviews
             </span>
           </div>
+          <div className="bulk-toggle-group">
+            <button type="button" className={!isBulkOrder ? "active" : ""} onClick={() => { setIsBulkOrder(false); setQuantity(1); }}>
+              {translate(language, "regularPurchase")}
+            </button>
+            {product.bulkPrice && (
+              <button type="button" className={isBulkOrder ? "active" : ""} onClick={() => { setIsBulkOrder(true); setQuantity(product.bulkMinimum ?? 25); }}>
+                {translate(language, "bulkOrder")}
+              </button>
+            )}
+          </div>
+          <div className="bulk-order-panel">
+            <div className="qty-stepper">
+              <button type="button" onClick={() => setQuantity((value) => Math.max(1, value - 1))}><Minus size={14} /></button>
+              <span>{quantity}</span>
+              <button type="button" onClick={() => setQuantity((value) => value + 1)}><Plus size={14} /></button>
+            </div>
+            <div className="bulk-order-summary">
+              <small>{isBulkOrder ? translate(language, "bulkPricing") : translate(language, "regularPricing")}</small>
+              <strong>₹{currentPrice} / {product.unit}</strong>
+              <em>{translate(language, "totalApprox")} ₹{totalEstimate}</em>
+            </div>
+          </div>
+          {isBulkOrder && (
+            <div className="bulk-tier-panel">
+              <div className="panel-title"><h3>Volume discounts</h3><span>More quantity, better price</span></div>
+              <div className="bulk-tier-list">{bulkTiers.map((tier) => <button type="button" className={activeBulkTier.minimum === tier.minimum ? "active" : ""} key={tier.minimum} onClick={() => setQuantity(tier.minimum)}><span>{tier.minimum}+ {product.unit}</span><strong>₹{tier.price}/{product.unit}</strong><small>{tier.discount ? `${tier.discount}% extra discount` : "Base bulk price"}</small></button>)}</div>
+            </div>
+          )}
           <p className="detail-description">
             Carefully grown, sorted and packed at source. {product.name} is
             selected for consistent quality and a shorter, more transparent
             supply chain. Every order supports the farmer who produced it.
           </p>
-          <button className="primary-button" onClick={() => add(product)}>
-            Add to basket <ShoppingBasket size={17} />
+          <button className="primary-button" onClick={() => add(product, quantity, isBulkOrder)}>
+            {translate(language, "addToBasket")} <ShoppingBasket size={17} />
           </button>
+          {isBulkOrder && (
+            <button className="outline-button" type="button" onClick={() => {
+              const quote = { id: `BQ-${Date.now().toString().slice(-6)}`, productId: product.id, product: product.name, quantity, unit: product.unit, unitPrice: currentPrice, total: totalEstimate, createdAt: new Date().toISOString() };
+              const quotes = JSON.parse(localStorage.getItem("direct-market-bulk-quotes") ?? "[]") as typeof quote[];
+              localStorage.setItem("direct-market-bulk-quotes", JSON.stringify([quote, ...quotes]));
+              setQuoteMessage(`Quote ${quote.id} requested for ${quantity} ${product.unit}.`);
+            }}>
+              Request custom quote <ArrowRight size={15} />
+            </button>
+          )}
+          {quoteMessage && <p className="success-message" role="status">{quoteMessage}</p>}
           <div className="seller-card">
             <div className="seller-heading">
               <span className="avatar mini">
@@ -1568,6 +1883,14 @@ function Detail({ add }: { add: (product: Product) => void }) {
               </span>
             </div>
           </div>
+          {product.bulkPrice && (
+            <div className="farmer-price-note">
+              <span className="farmer-price-badge">Farmer Price</span>
+              <p>
+                Price set by the farmer. Bulk orders from {product.bulkMinimum}+ {product.unit} use ₹{product.bulkPrice}/{product.unit}.
+              </p>
+            </div>
+          )}
         </div>
       </div>
       <div className="detail-analytics">
@@ -1717,53 +2040,57 @@ function Detail({ add }: { add: (product: Product) => void }) {
 function Cart({
   items,
   change,
+  language,
 }: {
   items: CartItem[];
-  change: (id: string, amount: number) => void;
+  change: (id: string, amount: number, isBulk?: boolean) => void;
+  language: Language;
 }) {
   const subtotal = items.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
+    (sum, item) => sum + (item.unitPrice ?? getProductUnitPrice(item.product, Boolean(item.isBulk))) * item.quantity,
     0,
   );
+  const bulkItems = items.filter((item) => item.isBulk);
   return (
     <section className="cart-page">
-      <p className="eyebrow">YOUR BASKET</p>
+      <p className="eyebrow">{translate(language, "yourBasket")}</p>
       <h1>
-        Ready when <i>you are.</i>
+        {translate(language, "readyWhen")} <i>you are.</i>
       </h1>
       {items.length === 0 ? (
         <div className="empty-state">
           <ShoppingBasket size={32} />
-          <h3>Your basket is waiting</h3>
-          <p>Add a few harvests from the marketplace to get started.</p>
+          <h3>{translate(language, "emptyBasketTitle")}</h3>
+          <p>{translate(language, "emptyBasketText")}</p>
           <Link to="/marketplace" className="primary-button">
-            Explore produce <ArrowRight size={16} />
+            {translate(language, "exploreProduce")} <ArrowRight size={16} />
           </Link>
         </div>
       ) : (
         <div className="cart-layout">
           <div className="cart-list">
             {items.map((item) => (
-              <div className="cart-row" key={item.product.id}>
+              <div className="cart-row" key={`${item.product.id}-${item.isBulk ? "bulk" : "regular"}`}>
                 <img src={item.product.image} alt="" />
                 <div>
                   <h3>{item.product.name}</h3>
                   <p>{item.product.farmer}</p>
                   <strong>
-                    ₹{item.product.price} <small>/ {item.product.unit}</small>
+                    ₹{item.unitPrice ?? getProductUnitPrice(item.product, Boolean(item.isBulk))} <small>/ {item.product.unit}</small>
                   </strong>
+                  {item.isBulk && <span className="bulk-badge">Bulk Purchase</span>}
                 </div>
                 <div className="stepper">
                   <button
                     aria-label={`Remove one ${item.product.name}`}
-                    onClick={() => change(item.product.id, -1)}
+                    onClick={() => change(item.product.id, -1, Boolean(item.isBulk))}
                   >
                     <Minus size={14} />
                   </button>
                   <b>{item.quantity}</b>
                   <button
                     aria-label={`Add one ${item.product.name}`}
-                    onClick={() => change(item.product.id, 1)}
+                    onClick={() => change(item.product.id, 1, Boolean(item.isBulk))}
                   >
                     <Plus size={14} />
                   </button>
@@ -1772,29 +2099,40 @@ function Cart({
             ))}
           </div>
           <aside className="summary">
-            <p className="eyebrow">ORDER SUMMARY</p>
+            <p className="eyebrow">{translate(language, "orderSummaryText")}</p>
+            {bulkItems.length > 0 && (
+              <div className="bulk-summary-box">
+                <span className="eyebrow">BULK ORDER SUMMARY</span>
+                {bulkItems.map((item) => (
+                  <div key={`${item.product.id}-summary`}>
+                    <small>{item.product.name}</small>
+                    <strong>{item.quantity} units · ₹{(item.unitPrice ?? getProductUnitPrice(item.product, true)) * item.quantity}</strong>
+                  </div>
+                ))}
+              </div>
+            )}
             <div>
-              <span>Produce subtotal</span>
+              <span>{translate(language, "produceSubtotal")}</span>
               <b>₹{subtotal}</b>
             </div>
             <div>
-              <span>Estimated logistics</span>
+              <span>{translate(language, "estimatedLogistics")}</span>
               <b>₹{subtotal ? 42 : 0}</b>
             </div>
             <div>
-              <span>Platform cost</span>
+              <span>{translate(language, "platformCost")}</span>
               <b>₹{subtotal ? 12 : 0}</b>
             </div>
             <hr />
             <div className="total">
-              <span>Total</span>
+              <span>{translate(language, "total")}</span>
               <b>₹{subtotal + (subtotal ? 54 : 0)}</b>
             </div>
             <Link to="/checkout" className="primary-button">
-              Continue to checkout <ArrowRight size={16} />
+              {translate(language, "continueCheckout")} <ArrowRight size={16} />
             </Link>
             <small className="demo-note">
-              Demo checkout · no real payment required
+              {translate(language, "demoCheckout")}
             </small>
           </aside>
         </div>
@@ -1803,7 +2141,7 @@ function Cart({
   );
 }
 
-function Login() {
+function Login({ language }: { language: Language }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -1874,25 +2212,22 @@ function Login() {
           ECOVISION
         </Link>
         <h1>
-          Direct connections.
+          {translate(language, "signInTitle")}
           <br />
-          <b>Transparent prices.</b>
+          <b>{translate(language, "transparentPrices")}</b>
           <br />
-          Smarter supply chains.
+          {translate(language, "smarterSupply")}
         </h1>
-        <p>
-          Join farmers and buyers building a fairer agricultural marketplace
-          without the middlemen.
-        </p>
+        <p>{translate(language, "joinText")}</p>
         <div className="auth-points">
           <span>
-            <ShieldCheck size={17} /> Full price transparency
+            <ShieldCheck size={17} /> {translate(language, "fullPriceTransparency")}
           </span>
           <span>
-            <ArrowRight size={17} /> Farmers earn more at source
+            <ArrowRight size={17} /> {translate(language, "farmersEarnMore")}
           </span>
           <span>
-            <Truck size={17} /> Managed logistics across India
+            <Truck size={17} /> {translate(language, "managedLogistics")}
           </span>
         </div>
       </div>
@@ -2101,7 +2436,13 @@ function ProfileMenu({
   );
 }
 
-function PortalShell() {
+function PortalShell({
+  language,
+  onLanguageChange,
+}: {
+  language: Language;
+  onLanguageChange: (nextLanguage: Language) => void;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -2215,12 +2556,12 @@ function PortalShell() {
           />
         </label>
         <nav className={open ? "nav-links open" : "nav-links"}>
-          <Link to="/">Home</Link>
-          <Link to="/marketplace">Marketplace</Link>
-          <Link to="/directory">Toolkit</Link>
+          <Link to="/">{translate(language, "home")}</Link>
+          <Link to="/marketplace">{translate(language, "marketplace")}</Link>
+          <Link to="/directory">{translate(language, "toolkit")}</Link>
           <details className="feature-nav">
             <summary>
-              Features <ChevronDown size={14} />
+              {translate(language, "features")} <ChevronDown size={14} />
             </summary>
             <div className="feature-nav-menu">
               <Link to="/directory" onClick={() => setOpen(false)}>All tools</Link>
@@ -2235,17 +2576,27 @@ function PortalShell() {
               ))}
             </div>
           </details>
-          <Link to="/logistics">Logistics</Link>
-          <Link className="nav-dashboard" to={dashboard}>
-            <LayoutDashboard size={15} /> Dashboard
+          <Link to="/logistics">{translate(language, "logistics")}</Link>
+          <Link to={dashboard}>
+            {translate(language, "dashboard")}
           </Link>
-          <Link to="/impact">Impact</Link>
+          <Link to="/impact">{translate(language, "impact")}</Link>
+          <label className="language-selector portal-language">
+            <Globe2 size={15} />
+            <select value={language} aria-label="Select language" onChange={(event) => {
+              onLanguageChange(event.target.value as Language);
+            }}>
+              <option value="English">English</option>
+              <option value="Hindi">Hindi</option>
+              <option value="Gujarati">Gujarati</option>
+            </select>
+          </label>
           {!session && (
             <>
               <Link to="/login" className="nav-sell">
-                Sign in <ArrowRight size={15} />
+                {translate(language, "signIn")} <ArrowRight size={15} />
               </Link>
-              <Link to="/register" className="nav-register">Create account</Link>
+              <Link to="/register" className="nav-register">{translate(language, "createAccount")}</Link>
             </>
           )}
         </nav>
@@ -2274,6 +2625,7 @@ function PortalShell() {
             element={
               <Home
                 session={session}
+                language={language}
                 add={(product) => {
                   addProduct(product);
                   navigate("/cart");
@@ -2283,13 +2635,13 @@ function PortalShell() {
           />
           <Route
             path="/marketplace"
-            element={<Marketplace add={addProduct} />}
+            element={<Marketplace add={addProduct} language={language} />}
           />
           <Route
             path="/marketplace/:id"
             element={
               <SessionGuard>
-                <EnhancedDetail add={addProduct} />
+                <EnhancedDetail add={addProduct} language={language} />
               </SessionGuard>
             }
           />
@@ -2297,7 +2649,7 @@ function PortalShell() {
             path="/cart"
             element={
               <SessionGuard>
-                <PersistentCart />
+                <PersistentCart language={language} />
               </SessionGuard>
             }
           />
@@ -2343,14 +2695,14 @@ function PortalShell() {
               </SessionGuard>
             }
           />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login language={language} />} />
+          <Route path="/register" element={<Register language={language} />} />
           <Route path="/profile" element={<SessionProfile />} />
           <Route
             path="/checkout"
             element={
               <SessionGuard>
-                <Checkout />
+                <Checkout language={language} />
               </SessionGuard>
             }
           />
@@ -2358,7 +2710,7 @@ function PortalShell() {
             path="/orders"
             element={
               <SessionGuard>
-                <Orders />
+                <Orders language={language} />
               </SessionGuard>
             }
           />
@@ -2366,7 +2718,7 @@ function PortalShell() {
             path="/orders/:id"
             element={
               <SessionGuard>
-                <OrderDetail />
+                <OrderDetail language={language} />
               </SessionGuard>
             }
           />
@@ -2374,7 +2726,7 @@ function PortalShell() {
             path="/logistics"
             element={
               <SessionGuard>
-                <Logistics />
+                <Logistics language={language} />
               </SessionGuard>
             }
           />
@@ -2548,7 +2900,7 @@ function PortalShell() {
   );
 }
 
-function Register() {
+function Register({ language }: { language: Language }) {
   const navigate = useNavigate();
   const [role, setRole] = useState("Consumer");
   const [submitted, setSubmitted] = useState(false);
@@ -2619,9 +2971,9 @@ function Register() {
         </Link>
         <p className="eyebrow">BUILD A FAIRER CHAIN</p>
         <h1>
-          Your account,
+          {translate(language, "createYourAccount")},
           <br />
-          <b>your market.</b>
+          <b>{translate(language, "marketplace")}</b>
         </h1>
         <p>
           Choose your role and create a workspace tailored to how you grow,
@@ -2652,7 +3004,7 @@ function Register() {
           Start with a few details. You can complete your profile later.
         </p>
         <div className="role-picker-heading">
-          <strong>How will you use ECOVISION?</strong>
+          <strong>{translate(language, "howWillYouUse")}</strong>
           <span>This shapes your workspace and recommendations.</span>
         </div>
         <div className="role-picker">
@@ -2719,7 +3071,7 @@ function Register() {
           </p>
         )}
         <button className="primary-button" onClick={() => void submit()}>
-          Create account <ArrowRight size={16} />
+          {translate(language, "createAccount")} <ArrowRight size={16} />
         </button>
         <p className="auth-footer">
           Already have an account? <Link to="/login">Sign in</Link>
@@ -2729,12 +3081,16 @@ function Register() {
   );
 }
 
-function Checkout() {
+function Checkout({ language }: { language: Language }) {
   const [step, setStep] = useState(1);
   const [address, setAddress] = useState("");
   const [slot, setSlot] = useState("Tomorrow · 9:00 AM – 12:00 PM");
   const [payment, setPayment] = useState("UPI");
   const [error, setError] = useState("");
+  const [customer, setCustomer] = useState<Session | null>(null);
+  useEffect(() => {
+    void authService.getCurrentUser().then(setCustomer);
+  }, []);
   const steps = ["Cart", "Address", "Delivery", "Payment", "Confirmation"];
   const next = () => {
     if (step === 1 && getStoredCart().length === 0) {
@@ -2747,6 +3103,26 @@ function Checkout() {
     }
     setError("");
     if (step === 4) {
+      const cart = getStoredCart();
+      const profile = customer
+        ? JSON.parse(localStorage.getItem(`direct-market-profile-${customer.email}`) ?? "{}") as { phone?: string }
+        : {};
+      saveOrder({
+        id: `DM-${Date.now().toString().slice(-6)}`,
+        customerName: customer?.name ?? "Guest customer",
+        customerEmail: customer?.email ?? "Not available",
+        customerPhone: profile.phone ?? "Not provided",
+        items: cart.map((item) => ({
+          productId: item.product.id,
+          name: item.product.name,
+          quantity: item.quantity,
+          unit: item.product.unit,
+          unitPrice: item.unitPrice ?? getProductUnitPrice(item.product, Boolean(item.isBulk)),
+        })),
+        total: cart.reduce((sum, item) => sum + (item.unitPrice ?? getProductUnitPrice(item.product, Boolean(item.isBulk))) * item.quantity, 0),
+        status: "Confirmed",
+        createdAt: new Date().toISOString(),
+      });
       localStorage.removeItem(cartStorageKey);
       localStorage.setItem("direct-market-cart-count", "0");
     }
@@ -2756,7 +3132,7 @@ function Checkout() {
     <section className="checkout-page">
       <p className="eyebrow">DEMO CHECKOUT</p>
       <h1>
-        From basket to
+        {translate(language, "yourBasket")}
         <br />
         <i>front door.</i>
       </h1>
@@ -2875,14 +3251,14 @@ function Checkout() {
   );
 }
 
-function Orders() {
+function Orders({ language }: { language: Language }) {
   return (
     <section className="workflow-page">
       <div className="page-title">
         <div>
           <p className="eyebrow">YOUR ACTIVITY</p>
           <h1>
-            Orders &<br />
+            {translate(language, "allOrders")} &<br />
             <i>deliveries.</i>
           </h1>
         </div>
@@ -2916,7 +3292,7 @@ function Orders() {
   );
 }
 
-function OrderDetail() {
+function OrderDetail({ language }: { language: Language }) {
   const { id } = useParams();
   return (
     <section className="workflow-page">
@@ -2927,19 +3303,19 @@ function OrderDetail() {
         <div>
           <p className="eyebrow">ORDER {id ?? "UNKNOWN"}</p>
           <h1>
-            Track your
+            {translate(language, "trackOrder")}
             <br />
             <i>delivery.</i>
           </h1>
         </div>
-        <span className="status large">Live updates</span>
+        <span className="status large">{translate(language, "liveUpdates")}</span>
       </div>
       <OrderTrackingPanel orderId={id} />
     </section>
   );
 }
 
-function Logistics() {
+function Logistics({ language }: { language: Language }) {
   const [selectedId, setSelectedId] = useState("MH-TRK-08");
   const [optimizing, setOptimizing] = useState(false);
   const shipments = [
@@ -2955,8 +3331,8 @@ function Logistics() {
   return (
     <section className="logistics-dashboard">
       <div className="logistics-hero">
-        <div className="logistics-title"><span className="logistics-icon"><Truck size={25} /></span><div><p className="eyebrow">OPERATIONS CONTROL CENTRE</p><h1>Logistics &amp; Routes</h1><p>Real-time shipment tracking with AI-optimized route visualization</p></div></div>
-        <span className="ai-route-badge"><Sparkles size={15} /> AI Route Optimization <small>Demo</small></span>
+        <div className="logistics-title"><span className="logistics-icon"><Truck size={25} /></span><div><p className="eyebrow">OPERATIONS CONTROL CENTRE</p><h1>{translate(language, "logisticsTitle")}</h1><p>Real-time shipment tracking with AI-optimized route visualization</p></div></div>
+        <span className="ai-route-badge"><Sparkles size={15} /> {translate(language, "routeOptimization")} <small>Demo</small></span>
       </div>
       <div className="logistics-kpis">
         {[["08", "Active Shipments", Truck], ["1,284 km", "Total Distance", Navigation], ["76%", "Avg Utilization", BarChart3], ["92%", "On-Time Rate", CheckCircle2]].map(([value, label, Icon]) => <div className="logistics-kpi" key={label as string}><span><Icon size={17} /></span><strong>{value as string}</strong><small>{label as string}</small></div>)}
@@ -2983,7 +3359,6 @@ function PortalPage({ role }: { role: string }) {
 }
 
 function OutsideClickDismissal() {
-  const location = useLocation();
   useEffect(() => {
     const closeMenus = (event: PointerEvent) => {
       const target = event.target as Element;
@@ -3004,7 +3379,7 @@ function OutsideClickDismissal() {
     document.addEventListener("pointerdown", closeMenus);
     return () => document.removeEventListener("pointerdown", closeMenus);
   }, []);
-  return location.pathname === "/" ? <LandingMotion /> : null;
+  return null;
 }
 
 function SessionProfile() {
@@ -3030,14 +3405,49 @@ function SessionProfile() {
 }
 
 function App() {
-  void Shell;
+  const [language, setLanguage] = useState<Language>(getStoredLanguage);
+
+  const handleLanguageChange = (nextLanguage: Language) => {
+    setLanguage(nextLanguage);
+    localStorage.setItem(languageStorageKey, nextLanguage);
+  };
+
   void LegacyMarketplace;
   return (
     <BrowserRouter>
-      <ApiRequestLoader />
-      <PortalShell />
-      <OutsideClickDismissal />
+      <AppShellRouter
+        language={language}
+        onLanguageChange={handleLanguageChange}
+      />
     </BrowserRouter>
+  );
+}
+
+function AppShellRouter({
+  language,
+  onLanguageChange,
+}: {
+  language: Language;
+  onLanguageChange: (nextLanguage: Language) => void;
+}) {
+  const location = useLocation();
+  const isPortalRoute = /^(farmer|buyer|admin)(\/|$)/.test(
+    location.pathname.slice(1),
+  );
+
+  return (
+    <>
+      <ApiRequestLoader />
+      {isPortalRoute ? (
+        <PortalShell
+          language={language}
+          onLanguageChange={onLanguageChange}
+        />
+      ) : (
+        <Shell language={language} onLanguageChange={onLanguageChange} />
+      )}
+      <OutsideClickDismissal />
+    </>
   );
 }
 
