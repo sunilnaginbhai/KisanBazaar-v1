@@ -2236,11 +2236,9 @@ function PortalShell() {
             </div>
           </details>
           <Link to="/logistics">Logistics</Link>
-          {session && (
-            <Link className="nav-dashboard" to={dashboard}>
-              <LayoutDashboard size={15} /> Dashboard
-            </Link>
-          )}
+          <Link className="nav-dashboard" to={dashboard}>
+            <LayoutDashboard size={15} /> Dashboard
+          </Link>
           <Link to="/impact">Impact</Link>
           {!session && (
             <>
@@ -2255,7 +2253,6 @@ function PortalShell() {
           <button
             className="menu-button"
             aria-label="Menu"
-            aria-expanded={open}
             onClick={() => setOpen(!open)}
           >
             {open ? <X /> : <Menu />}
